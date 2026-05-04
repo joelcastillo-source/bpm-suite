@@ -1,0 +1,1598 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BPM Suite — Plataforma SaaS</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#f0efe9;color:#1a1a1a;font-size:13px}
+:root{
+  --blue:#185FA5;--blue-l:#E6F1FB;--blue-d:#0C447C;
+  --green:#3B6D11;--green-l:#EAF3DE;
+  --amber:#854F0B;--amber-l:#FAEEDA;
+  --red:#A32D2D;--red-l:#FCEBEB;
+  --purple:#534AB7;--purple-l:#EEEDFE;
+  --gray:#5F5E5A;--gray-l:#F1EFE8;
+  --border:#e0ddd5;--bg:#fff;--bg2:#f7f6f2;--bg3:#f0efe9
+}
+input,select,textarea{width:100%;padding:8px 11px;border-radius:7px;border:1px solid var(--border);background:var(--bg);font-size:13px;color:#1a1a1a;font-family:inherit;box-sizing:border-box;transition:border .15s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px #185FA520}
+button{cursor:pointer;font-family:inherit;font-size:13px;border-radius:7px;padding:8px 16px;border:1px solid var(--border);background:var(--bg);color:#1a1a1a;transition:all .15s}
+button:hover{background:var(--bg2)}
+.btn-p{background:var(--blue)!important;color:#c8dff5!important;border-color:var(--blue-d)!important;font-weight:600}
+.btn-p:hover{background:var(--blue-d)!important}
+.btn-sm{padding:3px 9px;font-size:11px;border-radius:5px}
+.btn-danger{color:var(--red)!important;border-color:#f0959580!important}
+.btn-green{color:var(--green)!important;border-color:#c0dd9780!important}
+.btn-amber{color:var(--amber)!important;border-color:#fac77580!important}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-weight:500;font-size:11px;color:var(--gray);padding:9px 8px;border-bottom:1px solid var(--border);white-space:nowrap;background:var(--bg2)}
+td{padding:8px 8px;border-bottom:1px solid var(--border);vertical-align:middle;font-size:12.5px}
+tr:last-child td{border-bottom:none}
+.pill{display:inline-block;padding:2px 9px;border-radius:10px;font-size:10.5px;font-weight:500}
+.card{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:16px 18px}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-start;justify-content:center;z-index:300;overflow-y:auto;padding:20px}
+.modal{background:var(--bg);border-radius:14px;padding:28px;width:700px;max-width:98vw;border:1px solid var(--border);margin:auto}
+.modal-sm{width:500px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+label{font-size:11px;color:var(--gray);display:block;margin-bottom:5px;font-weight:500}
+.section-title{font-size:11px;font-weight:700;color:var(--gray);text-transform:uppercase;letter-spacing:.06em;padding:12px 0 8px;border-bottom:1px solid var(--border);margin-bottom:14px}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:10px;font-size:10.5px;font-weight:500}
+.step-dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.industry-card{border:2px solid var(--border);border-radius:10px;padding:14px;cursor:pointer;transition:all .15s;text-align:center}
+.industry-card:hover{border-color:var(--blue);background:var(--blue-l)}
+.industry-card.selected{border-color:var(--blue);background:var(--blue-l)}
+.format-chip{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:6px;font-size:11.5px;margin:3px;border:1px solid var(--border);background:var(--bg2)}
+.nav-item{display:flex;align-items:center;gap:8px;width:100%;padding:7px 8px;border-radius:6px;text-align:left;margin-bottom:2px;border:none;background:transparent;color:var(--gray);cursor:pointer;font-size:12.5px;font-family:inherit;transition:background .1s}
+.nav-item:hover{background:var(--bg2)}
+.nav-item.active{background:var(--bg2);color:#1a1a1a;font-weight:600}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+// ============================================================
+// INDUSTRIAS Y PRECONFIGURACIÓN BPM
+// ============================================================
+const INDUSTRIAS = {
+  alimentaria: {
+    label: 'Industria Alimentaria',
+    icon: '🏭',
+    color: '#0F6E56',
+    norma: 'DIGESA / HACCP / Codex Alimentarius',
+    desc: 'Alimentos procesados, bebidas, conservas, panificación',
+    registros: [
+      {tipo:'temperatura', nombre:'Control de temperatura en almacén frigorífico', area:'Almacén', frecuencia:'Cada 4 horas'},
+      {tipo:'limpieza',    nombre:'Limpieza y desinfección de línea de producción', area:'Producción', frecuencia:'Por turno'},
+      {tipo:'higiene',     nombre:'Control de higiene del personal', area:'Producción', frecuencia:'Al ingreso de turno'},
+      {tipo:'materiasPrimas', nombre:'Recepción y control de materias primas', area:'Almacén', frecuencia:'Por evento'},
+      {tipo:'agua',        nombre:'Control fisicoquímico del agua de proceso', area:'Calidad', frecuencia:'Diario'},
+      {tipo:'equipos',     nombre:'Verificación de equipos de medición', area:'Calidad', frecuencia:'Semanal'},
+    ],
+    docs: ['Manual BPM','SOP Limpieza y desinfección','SOP Control de temperatura','SOP Recepción de MP','Plan HACCP','Política de inocuidad','SOP Control de plagas'],
+    areas: ['Producción','Almacén','Calidad','Mantenimiento','Despacho'],
+  },
+  farmaceutica: {
+    label: 'Industria Farmacéutica',
+    icon: '💊',
+    color: '#185FA5',
+    norma: 'DIGEMID / BPF / ICH Q10',
+    desc: 'Medicamentos, API, formas farmacéuticas sólidas y líquidas',
+    registros: [
+      {tipo:'temperatura', nombre:'Control ambiental de sala de producción (T° y HR)', area:'Producción', frecuencia:'Cada 2 horas'},
+      {tipo:'equipos',     nombre:'Calificación y verificación de equipos críticos', area:'Producción', frecuencia:'Diario'},
+      {tipo:'limpieza',    nombre:'Limpieza y sanitización de equipos y áreas', area:'Producción', frecuencia:'Por lote'},
+      {tipo:'materiasPrimas', nombre:'Muestreo y control de materias primas e insumos', area:'Control de Calidad', frecuencia:'Por lote'},
+      {tipo:'agua',        nombre:'Control de agua purificada y WFI', area:'Servicios', frecuencia:'Diario'},
+      {tipo:'higiene',     nombre:'Acceso y comportamiento en áreas clasificadas', area:'Producción', frecuencia:'Por turno'},
+    ],
+    docs: ['Manual BPF','SOP Limpieza de equipos','SOP Control ambiental','SOP Gestión de desviaciones','Plan de validación','SOP Control de cambios','SOP Revisión anual del producto'],
+    areas: ['Producción','Control de Calidad','Aseguramiento de Calidad','Almacén','Servicios','Investigación'],
+  },
+  cosmeticos: {
+    label: 'Cosméticos y Cuidado Personal',
+    icon: '💄',
+    color: '#D4537E',
+    norma: 'ISO 22716 / BPF Cosméticos',
+    desc: 'Cremas, shampoos, maquillaje, perfumes, cuidado de la piel',
+    registros: [
+      {tipo:'temperatura', nombre:'Control de temperatura en área de mezcla', area:'Producción', frecuencia:'Por lote'},
+      {tipo:'limpieza',    nombre:'Limpieza de tanques y equipos de mezcla', area:'Producción', frecuencia:'Por lote'},
+      {tipo:'materiasPrimas', nombre:'Control de materias primas y fragancias', area:'Almacén', frecuencia:'Por recepción'},
+      {tipo:'higiene',     nombre:'Higiene y comportamiento del personal', area:'Producción', frecuencia:'Diario'},
+      {tipo:'equipos',     nombre:'Verificación de balanzas y viscosímetros', area:'Calidad', frecuencia:'Semanal'},
+    ],
+    docs: ['Manual BPF Cosméticos','SOP Control de lotes','SOP Estabilidad de productos','SOP Reclamaciones','SOP Evaluación de proveedores'],
+    areas: ['Producción','Control de Calidad','Almacén','I+D','Logística'],
+  },
+  nutraceuticos: {
+    label: 'Suplementos y Nutracéuticos',
+    icon: '🌿',
+    color: '#639922',
+    norma: 'FDA 21 CFR Part 111 / DIGESA',
+    desc: 'Vitaminas, minerales, proteínas, extractos herbales',
+    registros: [
+      {tipo:'materiasPrimas', nombre:'Control de materias primas e ingredientes activos', area:'Almacén', frecuencia:'Por recepción'},
+      {tipo:'temperatura', nombre:'Control de temperatura y humedad en almacén', area:'Almacén', frecuencia:'Diario'},
+      {tipo:'equipos',     nombre:'Verificación de encapsuladoras y envasadoras', area:'Producción', frecuencia:'Por turno'},
+      {tipo:'limpieza',    nombre:'Limpieza y sanitización de línea', area:'Producción', frecuencia:'Por lote'},
+      {tipo:'higiene',     nombre:'Control de higiene del personal', area:'Producción', frecuencia:'Al ingreso'},
+      {tipo:'agua',        nombre:'Control de agua de proceso', area:'Calidad', frecuencia:'Semanal'},
+    ],
+    docs: ['Manual BPF Nutracéuticos','SOP Pesaje de ingredientes','SOP Control de lotes','SOP Trazabilidad','SOP Retiro de producto','Plan de muestreo'],
+    areas: ['Producción','Control de Calidad','Almacén','Logística','Mantenimiento'],
+  },
+};
+
+// TIPOS DE REGISTRO (campos específicos)
+const TIPOS_REGISTRO = {
+  temperatura:{label:'Control de temperatura',icon:'🌡',color:'#185FA5',
+    camposFijos:[{k:'equipo',l:'Equipo / Área'},{k:'rangoMin',l:'Temp. mínima (°C)'},{k:'rangoMax',l:'Temp. máxima (°C)'},{k:'frecuencia',l:'Frecuencia de lectura'},{k:'instrumento',l:'Instrumento de medición'}],
+    columnasLlenado:[{k:'fecha',l:'Fecha',type:'date'},{k:'hora',l:'Hora',type:'time'},{k:'valor',l:'Valor registrado',type:'number'},{k:'dentroRango',l:'¿Dentro rango?',type:'select',opts:['Sí','No']},{k:'accion',l:'Acción tomada'},{k:'operario',l:'Operario'}]},
+  limpieza:{label:'Limpieza y desinfección',icon:'🧹',color:'#0F6E56',
+    camposFijos:[{k:'area',l:'Área / Equipo'},{k:'producto',l:'Producto desinfectante'},{k:'concentracion',l:'Concentración'},{k:'tiempoContacto',l:'Tiempo contacto (min)'},{k:'metodologia',l:'Metodología'}],
+    columnasLlenado:[{k:'fecha',l:'Fecha',type:'date'},{k:'hora',l:'Hora',type:'time'},{k:'concentracionReal',l:'Conc. usada'},{k:'tiempoReal',l:'Tiempo (min)',type:'number'},{k:'resultado',l:'Resultado',type:'select',opts:['Conforme','No conforme']},{k:'accion',l:'Observaciones'},{k:'operario',l:'Operario'}]},
+  higiene:{label:'Higiene del personal',icon:'🧼',color:'#639922',
+    camposFijos:[{k:'area',l:'Área'},{k:'turno',l:'Turno'},{k:'requisitos',l:'Requisitos aplicables'},{k:'responsable',l:'Verificador responsable'}],
+    columnasLlenado:[{k:'fecha',l:'Fecha',type:'date'},{k:'turno',l:'Turno',type:'select',opts:['Mañana','Tarde','Noche']},{k:'nPersonas',l:'N° personas',type:'number'},{k:'uniforme',l:'Uniforme OK',type:'select',opts:['Sí','No','Parcial']},{k:'manos',l:'Manos OK',type:'select',opts:['Sí','No']},{k:'accion',l:'Observaciones'},{k:'operario',l:'Verificador'}]},
+  materiasPrimas:{label:'Control de materias primas',icon:'📦',color:'#BA7517',
+    camposFijos:[{k:'producto',l:'Producto'},{k:'proveedor',l:'Proveedor habitual'},{k:'criterios',l:'Criterios de aceptación'},{k:'documentos',l:'Documentos requeridos'}],
+    columnasLlenado:[{k:'fecha',l:'Fecha',type:'date'},{k:'proveedor',l:'Proveedor'},{k:'lote',l:'N° Lote'},{k:'cantidad',l:'Cantidad'},{k:'temperatura',l:'Temp. (°C)',type:'number'},{k:'estado',l:'Estado',type:'select',opts:['Conforme','No conforme']},{k:'decision',l:'Decisión',type:'select',opts:['Aceptado','Rechazado','Cuarentena']},{k:'operario',l:'Inspector'}]},
+  equipos:{label:'Verificación de equipos',icon:'⚙️',color:'#534AB7',
+    camposFijos:[{k:'equipo',l:'Equipo'},{k:'codigo',l:'Código/Serie'},{k:'parametros',l:'Parámetros a verificar'},{k:'tolerancia',l:'Tolerancia'}],
+    columnasLlenado:[{k:'fecha',l:'Fecha',type:'date'},{k:'parametro',l:'Parámetro'},{k:'esperado',l:'Valor esperado'},{k:'obtenido',l:'Valor obtenido'},{k:'cumple',l:'¿Cumple?',type:'select',opts:['Sí','No']},{k:'estado',l:'Estado equipo',type:'select',opts:['Operativo','Fuera de servicio','En mantenimiento']},{k:'accion',l:'Acción'},{k:'operario',l:'Técnico'}]},
+  agua:{label:'Control de agua',icon:'💧',color:'#185FA5',
+    camposFijos:[{k:'punto',l:'Punto de muestreo'},{k:'uso',l:'Uso del agua'},{k:'limiteCloro',l:'Límite cloro (mg/L)'},{k:'limitePH',l:'Rango pH'}],
+    columnasLlenado:[{k:'fecha',l:'Fecha',type:'date'},{k:'cloro',l:'Cloro (mg/L)',type:'number'},{k:'ph',l:'pH',type:'number'},{k:'turbidez',l:'Turbidez (NTU)',type:'number'},{k:'cumple',l:'¿Cumple?',type:'select',opts:['Sí','No']},{k:'accion',l:'Acción'},{k:'operario',l:'Analista'}]},
+};
+
+const FRECUENCIAS = ['Cada hora','Cada 2 horas','Cada 4 horas','Por turno','Al ingreso de turno','Diario','Por lote','Por evento','Semanal','Mensual'];
+
+// ============================================================
+// PERSISTENCIA
+// ============================================================
+const K = {
+  tenants: 'bpm_saas_tenants',
+  session: 'bpm_saas_session',
+  formatos: 'bpm_saas_formatos',
+};
+
+const store = {
+  getTenants: () => { try { return JSON.parse(localStorage.getItem(K.tenants)||'{}'); } catch(e){ return {}; }},
+  saveTenants: (t) => localStorage.setItem(K.tenants, JSON.stringify(t)),
+  getSession: () => { try { return JSON.parse(localStorage.getItem(K.session)||'null'); } catch(e){ return null; }},
+  saveSession: (s) => localStorage.setItem(K.session, JSON.stringify(s)),
+  getFormatos: (tid) => { try { const all=JSON.parse(localStorage.getItem(K.formatos)||'{}'); return all[tid]||{}; } catch(e){ return {}; }},
+  saveFormatos: (tid, f) => {
+    try { const all=JSON.parse(localStorage.getItem(K.formatos)||'{}'); all[tid]=f; localStorage.setItem(K.formatos,JSON.stringify(all)); } catch(e){}
+  },
+};
+
+// ============================================================
+// STATE
+// ============================================================
+let S = {
+  screen: 'landing',  // landing | register | app
+  wizard: { step: 1, empresa: {}, industria: null, areas: [], adminUser: {} },
+  session: null,      // { tenantId, userId }
+  tenant: null,       // tenant data object
+  user: null,         // user object
+  view: 'dashboard',
+  modal: null,
+  formatos: {},
+  iaOpen: false,
+  iaMessages: [{role:'assistant',content:'¡Hola! Soy tu asistente BPM con IA. Puedo generar documentos, analizar cumplimiento, sugerir mejoras y responder sobre normativa BPM. ¿En qué te ayudo?'}],
+};
+
+function go(patch) { Object.assign(S, patch); render(); }
+
+// On load, check session
+const savedSession = store.getSession();
+if (savedSession) {
+  const tenants = store.getTenants();
+  const tenant = tenants[savedSession.tenantId];
+  if (tenant) {
+    const user = tenant.users.find(u => u.id === savedSession.userId);
+    if (user && user.activo) {
+      S.session = savedSession;
+      S.tenant = tenant;
+      S.user = user;
+      S.formatos = store.getFormatos(savedSession.tenantId);
+      S.screen = 'app';
+      S.view = user.rol === 'operario' ? 'registros' : 'dashboard';
+    }
+  }
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+const ESTADO_CFG = {
+  al_dia:    {l:'Al día',       bg:'var(--green-l)',  c:'var(--green)'},
+  pendiente: {l:'Pendiente',    bg:'var(--amber-l)',  c:'var(--amber)'},
+  vencido:   {l:'Vencido',      bg:'var(--red-l)',    c:'var(--red)'},
+  en_proceso:{l:'En proceso',   bg:'var(--blue-l)',   c:'var(--blue)'},
+  cerrado:   {l:'Cerrado',      bg:'var(--green-l)',  c:'var(--green)'},
+  proximo:   {l:'Por renovar',  bg:'var(--amber-l)',  c:'var(--amber)'},
+};
+const FILA_CFG = {
+  pendiente: {l:'Llenado',      bg:'var(--blue-l)',   c:'var(--blue)'},
+  revision:  {l:'En revisión',  bg:'var(--amber-l)',  c:'var(--amber)'},
+  aprobado:  {l:'Aprobado',     bg:'var(--green-l)',  c:'var(--green)'},
+  rechazado: {l:'Rechazado',    bg:'var(--red-l)',    c:'var(--red)'},
+};
+const ROL_CFG = {
+  admin:      {l:'Administrador', bg:'var(--blue-l)',   c:'var(--blue)'},
+  supervisor: {l:'Supervisor',    bg:'var(--purple-l)', c:'var(--purple)'},
+  operario:   {l:'Operario',      bg:'var(--green-l)',  c:'var(--green)'},
+  auditor:    {l:'Auditor',       bg:'var(--amber-l)',  c:'var(--amber)'},
+};
+const pill = (cfg, l) => `<span class="pill" style="background:${cfg.bg||cfg.bg};color:${cfg.c||cfg.c}">${l||cfg.l}</span>`;
+const uid = () => 'x'+Date.now()+Math.random().toString(36).slice(2,6);
+const today = () => new Date().toISOString().slice(0,10);
+
+// ============================================================
+// RENDER
+// ============================================================
+function render() {
+  document.getElementById('app').innerHTML =
+    S.screen === 'landing' ? buildLanding() :
+    S.screen === 'register' ? buildWizard() :
+    buildApp();
+  attachEvents();
+}
+
+// ============================================================
+// LANDING
+// ============================================================
+function buildLanding() {
+  const tenants = store.getTenants();
+  const count = Object.keys(tenants).length;
+  return `
+<div style="min-height:100vh;background:linear-gradient(135deg,#0C447C 0%,#185FA5 50%,#1a7a6e 100%);display:flex;flex-direction:column">
+  <nav style="padding:16px 40px;display:flex;align-items:center;justify-content:space-between">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="width:34px;height:34px;background:rgba(255,255,255,.2);border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-size:16px;font-weight:700">B</div>
+      <span style="color:white;font-size:16px;font-weight:700">BPM Suite</span>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button onclick="goLogin()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:white;padding:7px 18px">Iniciar sesión</button>
+      <button onclick="goRegister()" style="background:white;border:none;color:var(--blue);font-weight:700;padding:7px 18px">Registrar empresa</button>
+    </div>
+  </nav>
+  <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:40px;text-align:center">
+    <div style="max-width:680px">
+      <div style="font-size:11px;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.12em;margin-bottom:14px">Plataforma SaaS · Multitenant</div>
+      <h1 style="font-size:42px;font-weight:800;color:white;line-height:1.15;margin-bottom:16px;letter-spacing:-.02em">Gestión de BPM<br>para la industria</h1>
+      <p style="font-size:16px;color:rgba(255,255,255,.75);line-height:1.6;margin-bottom:32px">Registros, documentos, auditorías y no conformidades preconfigurados según tu tipo de industria. Listo para usar en minutos.</p>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:40px">
+        <button onclick="goRegister()" style="background:white;border:none;color:var(--blue);font-weight:700;padding:12px 28px;font-size:14px;border-radius:8px">Comenzar gratis →</button>
+        ${count>0?`<button onclick="goLogin()" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:white;padding:12px 28px;font-size:14px;border-radius:8px">Ya tengo cuenta</button>`:''}
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;max-width:500px;margin:0 auto">
+        ${Object.entries(INDUSTRIAS).map(([k,v])=>`<div style="background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:10px;padding:12px 8px;text-align:center">
+          <div style="font-size:22px;margin-bottom:4px">${v.icon}</div>
+          <div style="font-size:10px;color:rgba(255,255,255,.8);font-weight:500;line-height:1.3">${v.label}</div>
+        </div>`).join('')}
+      </div>
+      ${count>0?`<div style="margin-top:20px;font-size:12px;color:rgba(255,255,255,.5)">${count} empresa${count>1?'s':''} registrada${count>1?'s':''} en esta instalación</div>`:''}
+    </div>
+  </div>
+</div>`;
+}
+
+// ============================================================
+// WIZARD DE REGISTRO
+// ============================================================
+function buildWizard() {
+  const w = S.wizard;
+  const steps = ['Empresa','Industria','Áreas y turnos','Administrador','Confirmar'];
+  return `
+<div style="min-height:100vh;background:var(--bg3);display:flex;flex-direction:column">
+  <nav style="padding:14px 32px;background:var(--bg);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">
+    <div style="width:28px;height:28px;background:var(--blue);border-radius:6px;display:flex;align-items:center;justify-content:center;color:#c8dff5;font-size:13px;font-weight:700">B</div>
+    <span style="font-weight:700;font-size:14px">BPM Suite</span>
+    <span style="color:var(--border)">·</span>
+    <span style="color:var(--gray);font-size:13px">Registro de nueva empresa</span>
+    <button onclick="go({screen:'landing'})" style="margin-left:auto;border:none;background:transparent;color:var(--gray);font-size:12px">← Volver al inicio</button>
+  </nav>
+
+  <!-- PROGRESS -->
+  <div style="background:var(--bg);border-bottom:1px solid var(--border);padding:16px 32px">
+    <div style="display:flex;align-items:center;max-width:700px;margin:0 auto">
+      ${steps.map((s,i)=>`
+        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1">
+          <div class="step-dot" style="background:${i+1<w.step?'var(--green)':i+1===w.step?'var(--blue)':'var(--border)'};color:${i+1<=w.step?'white':'var(--gray)'}">
+            ${i+1<w.step?'✓':i+1}
+          </div>
+          <div style="font-size:10px;font-weight:${i+1===w.step?600:400};color:${i+1===w.step?'var(--blue)':i+1<w.step?'var(--green)':'var(--gray)'};text-align:center">${s}</div>
+        </div>
+        ${i<steps.length-1?`<div style="flex:1;height:2px;background:${i+1<w.step?'var(--green)':'var(--border)'};margin-bottom:18px"></div>`:''}
+      `).join('')}
+    </div>
+  </div>
+
+  <div style="flex:1;display:flex;align-items:flex-start;justify-content:center;padding:32px 20px">
+    <div style="width:100%;max-width:680px">
+      ${buildWizardStep(w.step)}
+    </div>
+  </div>
+</div>`;
+}
+
+function buildWizardStep(step) {
+  const w = S.wizard;
+  const e = w.empresa;
+
+  if (step === 1) return `
+<div class="card" style="padding:28px">
+  <div style="font-size:20px;font-weight:700;margin-bottom:4px">Datos de tu empresa</div>
+  <div style="font-size:13px;color:var(--gray);margin-bottom:24px">Información básica para configurar tu espacio en BPM Suite</div>
+  <div class="grid2" style="gap:14px">
+    <div style="grid-column:span 2"><label>Razón social *</label><input id="w-razon" value="${e.razonSocial||''}" placeholder="Ej: Alimentos del Sur S.A.C."></div>
+    <div><label>RUC / NIT / RFC</label><input id="w-ruc" value="${e.ruc||''}" placeholder="20123456789"></div>
+    <div><label>País</label><select id="w-pais">
+      ${['Perú','Colombia','México','Chile','Argentina','Ecuador','Bolivia','Venezuela','Otro'].map(p=>`<option${e.pais===p?' selected':''}>${p}</option>`).join('')}
+    </select></div>
+    <div><label>Ciudad / Región</label><input id="w-ciudad" value="${e.ciudad||''}" placeholder="Lima"></div>
+    <div><label>Dirección de planta</label><input id="w-direccion" value="${e.direccion||''}" placeholder="Av. Industrial 234"></div>
+    <div><label>Teléfono</label><input id="w-telefono" value="${e.telefono||''}" placeholder="+51 1 234-5678"></div>
+    <div><label>Correo de contacto</label><input id="w-email" value="${e.email||''}" placeholder="calidad@empresa.com"></div>
+    <div><label>Nombre comercial / marca</label><input id="w-marca" value="${e.marca||''}" placeholder="Opcional"></div>
+    <div><label>N° de empleados aproximado</label><select id="w-empleados">
+      ${['1-10','11-50','51-200','201-500','Más de 500'].map(n=>`<option${e.empleados===n?' selected':''}>${n}</option>`).join('')}
+    </select></div>
+  </div>
+  <div style="display:flex;justify-content:flex-end;margin-top:24px">
+    <button class="btn-p" style="padding:10px 28px" onclick="wizardNext(1)">Siguiente: Tipo de industria →</button>
+  </div>
+</div>`;
+
+  if (step === 2) return `
+<div class="card" style="padding:28px">
+  <div style="font-size:20px;font-weight:700;margin-bottom:4px">Tipo de industria</div>
+  <div style="font-size:13px;color:var(--gray);margin-bottom:24px">Selecciona tu industria para precargar los registros y documentos BPM correspondientes</div>
+  <div class="grid2" style="gap:14px;margin-bottom:20px">
+    ${Object.entries(INDUSTRIAS).map(([k,v])=>`
+    <div class="industry-card ${w.industria===k?'selected':''}" onclick="selectIndustria('${k}')">
+      <div style="font-size:32px;margin-bottom:8px">${v.icon}</div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:4px">${v.label}</div>
+      <div style="font-size:11px;color:var(--gray);margin-bottom:8px">${v.norma}</div>
+      <div style="font-size:11px;color:var(--gray)">${v.desc}</div>
+    </div>`).join('')}
+  </div>
+  ${w.industria ? `
+  <div style="padding:16px;background:var(--blue-l);border-radius:10px;border:1px solid #B5D4F4;margin-bottom:20px">
+    <div style="font-size:12px;font-weight:600;color:var(--blue);margin-bottom:8px">✓ Se precargarán automáticamente para ${INDUSTRIAS[w.industria].label}:</div>
+    <div style="margin-bottom:8px">
+      <span style="font-size:11px;color:var(--gray);font-weight:500">Registros BPM (${INDUSTRIAS[w.industria].registros.length}):</span><br>
+      ${INDUSTRIAS[w.industria].registros.map(r=>`<span class="format-chip">${TIPOS_REGISTRO[r.tipo]?.icon} ${r.nombre}</span>`).join('')}
+    </div>
+    <div>
+      <span style="font-size:11px;color:var(--gray);font-weight:500">Documentos y SOPs (${INDUSTRIAS[w.industria].docs.length}):</span><br>
+      ${INDUSTRIAS[w.industria].docs.map(d=>`<span class="format-chip">📄 ${d}</span>`).join('')}
+    </div>
+  </div>` : `<div style="padding:16px;background:var(--bg2);border-radius:10px;text-align:center;color:var(--gray);margin-bottom:20px">Selecciona una industria para ver la preconfiguración</div>`}
+  <div style="display:flex;justify-content:space-between">
+    <button onclick="go({wizard:{...S.wizard,step:1}})">← Anterior</button>
+    <button class="btn-p" style="padding:10px 28px" onclick="wizardNext(2)" ${!w.industria?'disabled style="opacity:.5"':''}>Siguiente: Áreas →</button>
+  </div>
+</div>`;
+
+  if (step === 3) {
+    const ind = INDUSTRIAS[w.industria]||{areas:[]};
+    const areas = w.areas.length ? w.areas : [...ind.areas];
+    if (!w.areas.length) S.wizard.areas = [...ind.areas];
+    return `
+<div class="card" style="padding:28px">
+  <div style="font-size:20px;font-weight:700;margin-bottom:4px">Áreas y configuración de turnos</div>
+  <div style="font-size:13px;color:var(--gray);margin-bottom:24px">Configura las áreas de tu planta y los turnos de trabajo</div>
+  <div class="section-title">Áreas de la empresa</div>
+  <div style="margin-bottom:12px">
+    ${areas.map((a,i)=>`
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+      <input value="${a}" onchange="updateArea(${i},this.value)" style="flex:1">
+      <button class="btn-sm btn-danger" onclick="removeArea(${i})">✕</button>
+    </div>`).join('')}
+    <button onclick="addArea()" style="font-size:12px;color:var(--blue);border-color:var(--blue-l);background:var(--blue-l);margin-top:4px">+ Agregar área</button>
+  </div>
+  <div class="section-title" style="margin-top:20px">Configuración de turnos</div>
+  <div class="grid3" style="margin-bottom:16px">
+    <div><label>N° de turnos</label><select id="w-nTurnos">
+      ${[1,2,3].map(n=>`<option value="${n}"${(w.empresa.nTurnos||2)==n?' selected':''}>${n} turno${n>1?'s':''}</option>`).join('')}
+    </select></div>
+    <div><label>Horario turno 1</label><input id="w-t1" value="${w.empresa.turno1||'06:00 - 14:00'}"></div>
+    <div><label>Horario turno 2</label><input id="w-t2" value="${w.empresa.turno2||'14:00 - 22:00'}"></div>
+  </div>
+  <div class="section-title">Temporalidad de registros</div>
+  <p style="font-size:12px;color:var(--gray);margin-bottom:12px">Define con qué frecuencia se completará cada registro. Puedes ajustarlo individualmente después.</p>
+  <div style="overflow-x:auto">
+  <table>
+    <thead><tr><th>Registro</th><th>Frecuencia</th><th>Área responsable</th></tr></thead>
+    <tbody>
+      ${INDUSTRIAS[w.industria].registros.map((r,i)=>`
+      <tr>
+        <td><span style="font-size:14px">${TIPOS_REGISTRO[r.tipo]?.icon}</span> ${r.nombre}</td>
+        <td><select id="freq-${i}" style="width:150px">
+          ${FRECUENCIAS.map(f=>`<option${r.frecuencia===f?' selected':''}>${f}</option>`).join('')}
+        </select></td>
+        <td><select id="area-${i}" style="width:130px">
+          ${areas.map(a=>`<option${r.area===a?' selected':''}>${a}</option>`).join('')}
+        </select></td>
+      </tr>`).join('')}
+    </tbody>
+  </table>
+  </div>
+  <div style="display:flex;justify-content:space-between;margin-top:24px">
+    <button onclick="go({wizard:{...S.wizard,step:2}})">← Anterior</button>
+    <button class="btn-p" style="padding:10px 28px" onclick="wizardNext(3)">Siguiente: Administrador →</button>
+  </div>
+</div>`;
+  }
+
+  if (step === 4) return `
+<div class="card" style="padding:28px">
+  <div style="font-size:20px;font-weight:700;margin-bottom:4px">Cuenta del administrador</div>
+  <div style="font-size:13px;color:var(--gray);margin-bottom:24px">Esta será la cuenta principal con acceso total al sistema</div>
+  <div class="grid2" style="gap:14px">
+    <div><label>Nombre completo *</label><input id="w-anombre" value="${w.adminUser.nombre||''}" placeholder="Ej: Juan Pérez"></div>
+    <div><label>Cargo / Puesto</label><input id="w-acargo" value="${w.adminUser.cargo||''}" placeholder="Ej: Jefe de Calidad"></div>
+    <div><label>Nombre de usuario *</label><input id="w-ausuario" value="${w.adminUser.usuario||''}" placeholder="ej: jperez"></div>
+    <div><label>Contraseña *</label><input id="w-apw" type="password" placeholder="Mínimo 6 caracteres"></div>
+    <div><label>Confirmar contraseña *</label><input id="w-apw2" type="password" placeholder="Repite la contraseña"></div>
+    <div><label>Correo electrónico</label><input id="w-aemail" value="${w.adminUser.email||''}" placeholder="admin@empresa.com"></div>
+    <div><label>Área</label><select id="w-aarea">
+      ${(S.wizard.areas.length?S.wizard.areas:INDUSTRIAS[w.industria]?.areas||[]).map(a=>`<option>${a}</option>`).join('')}
+    </select></div>
+    <div><label>Teléfono directo</label><input id="w-atel" value="${w.adminUser.telefono||''}" placeholder="+51 999 999 999"></div>
+  </div>
+  <div style="margin-top:16px;padding:12px 14px;background:var(--green-l);border-radius:8px;font-size:12px;color:var(--green);border:1px solid #c0dd9780">
+    <strong>Nota:</strong> El administrador podrá crear y gestionar todos los demás usuarios del sistema (supervisores, operarios y auditores).
+  </div>
+  <div style="display:flex;justify-content:space-between;margin-top:24px">
+    <button onclick="go({wizard:{...S.wizard,step:3}})">← Anterior</button>
+    <button class="btn-p" style="padding:10px 28px" onclick="wizardNext(4)">Siguiente: Confirmar →</button>
+  </div>
+</div>`;
+
+  if (step === 5) {
+    const ind = INDUSTRIAS[w.industria];
+    return `
+<div class="card" style="padding:28px">
+  <div style="font-size:20px;font-weight:700;margin-bottom:4px">Confirma tu configuración</div>
+  <div style="font-size:13px;color:var(--gray);margin-bottom:24px">Revisa todo antes de crear tu espacio BPM</div>
+  <div class="grid2" style="gap:12px;margin-bottom:20px">
+    <div style="padding:14px;background:var(--bg2);border-radius:8px;border:1px solid var(--border)">
+      <div style="font-size:11px;color:var(--gray);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Empresa</div>
+      <div style="font-size:14px;font-weight:700;margin-bottom:2px">${w.empresa.razonSocial}</div>
+      <div style="font-size:12px;color:var(--gray)">${w.empresa.ruc||''} · ${w.empresa.ciudad||''}, ${w.empresa.pais||''}</div>
+      <div style="font-size:12px;color:var(--gray);margin-top:4px">${w.empresa.email||''}</div>
+    </div>
+    <div style="padding:14px;background:var(--bg2);border-radius:8px;border:1px solid var(--border)">
+      <div style="font-size:11px;color:var(--gray);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Industria</div>
+      <div style="font-size:20px;margin-bottom:4px">${ind.icon}</div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:2px">${ind.label}</div>
+      <div style="font-size:11px;color:var(--gray)">${ind.norma}</div>
+    </div>
+  </div>
+  <div style="margin-bottom:16px;padding:14px;background:var(--bg2);border-radius:8px;border:1px solid var(--border)">
+    <div style="font-size:11px;color:var(--gray);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Se crearán automáticamente</div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap">
+      <div><span style="font-size:22px;font-weight:700;color:var(--blue)">${ind.registros.length}</span><br><span style="font-size:11px;color:var(--gray)">Registros BPM</span></div>
+      <div><span style="font-size:22px;font-weight:700;color:var(--purple)">${ind.docs.length}</span><br><span style="font-size:11px;color:var(--gray)">Documentos</span></div>
+      <div><span style="font-size:22px;font-weight:700;color:var(--green)">${w.areas.length}</span><br><span style="font-size:11px;color:var(--gray)">Áreas</span></div>
+      <div><span style="font-size:22px;font-weight:700;color:var(--amber)">1</span><br><span style="font-size:11px;color:var(--gray)">Usuario (admin)</span></div>
+    </div>
+  </div>
+  <div style="padding:14px;background:var(--bg2);border-radius:8px;border:1px solid var(--border);margin-bottom:20px">
+    <div style="font-size:11px;color:var(--gray);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Administrador</div>
+    <div style="font-size:13px;font-weight:600">${w.adminUser.nombre}</div>
+    <div style="font-size:12px;color:var(--gray)">Usuario: ${w.adminUser.usuario} · ${w.adminUser.cargo||''}</div>
+  </div>
+  <div style="display:flex;justify-content:space-between">
+    <button onclick="go({wizard:{...S.wizard,step:4}})">← Anterior</button>
+    <button class="btn-p" style="padding:12px 32px;font-size:14px" onclick="createTenant()">🚀 Crear mi espacio BPM</button>
+  </div>
+</div>`;
+  }
+  return '';
+}
+
+// ============================================================
+// LOGIN SCREEN
+// ============================================================
+function buildLoginScreen() {
+  const tenants = store.getTenants();
+  const lista = Object.values(tenants);
+  return `
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg3);padding:20px">
+  <div style="width:100%;max-width:420px">
+    <div style="text-align:center;margin-bottom:28px">
+      <div style="width:52px;height:52px;background:var(--blue);border-radius:14px;display:flex;align-items:center;justify-content:center;color:#c8dff5;font-size:22px;font-weight:700;margin:0 auto 12px">B</div>
+      <div style="font-size:22px;font-weight:700">BPM Suite</div>
+      <div style="font-size:12px;color:var(--gray);margin-top:4px">Selecciona tu empresa e ingresa</div>
+    </div>
+    <div class="card" style="padding:28px">
+      ${lista.length === 0 ? `<div style="text-align:center;padding:20px;color:var(--gray)">No hay empresas registradas.<br><button onclick="goRegister()" style="margin-top:12px;color:var(--blue);border:none;background:transparent;text-decoration:underline;cursor:pointer">Registrar empresa</button></div>` : `
+      <div style="margin-bottom:16px"><label>Empresa</label>
+        <select id="login-tenant" onchange="updateUserList()">
+          ${lista.map(t=>`<option value="${t.id}">${t.razonSocial}</option>`).join('')}
+        </select>
+      </div>
+      <div style="margin-bottom:12px"><label>Usuario</label>
+        <select id="login-user">
+          ${(lista[0]?.users||[]).filter(u=>u.activo).map(u=>`<option value="${u.id}">${u.nombre} (${ROL_CFG[u.rol]?.l||u.rol})</option>`).join('')}
+        </select>
+      </div>
+      <div style="margin-bottom:16px"><label>Contraseña</label><input id="login-pw" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <div id="login-err" style="display:none;padding:8px 12px;border-radius:7px;background:var(--red-l);color:var(--red);margin-bottom:12px;font-size:12.5px"></div>
+      <button class="btn-p" style="width:100%;padding:10px" onclick="doLogin()">Ingresar →</button>
+      <button onclick="goRegister()" style="width:100%;margin-top:10px;background:transparent;border:none;color:var(--gray);font-size:12px">+ Registrar nueva empresa</button>`}
+    </div>
+  </div>
+</div>`;
+}
+
+// ============================================================
+// APP SHELL
+// ============================================================
+function buildApp() {
+  if (S.loginScreen) return buildLoginScreen();
+  const u = S.user;
+  const t = S.tenant;
+  const nav = [
+    {id:'dashboard',      l:'Dashboard',           color:'#185FA5', roles:['admin','supervisor','auditor']},
+    {id:'registros',      l:'Registros BPM',        color:'#0F6E56', roles:['admin','supervisor','operario','auditor']},
+    {id:'documentos',     l:'Documentos y SOPs',    color:'#534AB7', roles:['admin','supervisor','auditor']},
+    {id:'auditorias',     l:'Auditorías',           color:'#BA7517', roles:['admin','supervisor','auditor']},
+    {id:'capacitaciones', l:'Capacitaciones',       color:'#639922', roles:['admin','supervisor','auditor']},
+    {id:'noconformidades',l:'No conformidades',     color:'#A32D2D', roles:['admin','supervisor','auditor']},
+    {id:'usuarios',       l:'Usuarios',             color:'#534AB7', roles:['admin']},
+    {id:'configuracion',  l:'Configuración',        color:'#534AB7', roles:['admin']},
+  ].filter(n=>n.roles.includes(u.rol));
+  const current = nav.find(n=>n.id===S.view)||nav[0];
+  const rolC = ROL_CFG[u.rol];
+  const ind = INDUSTRIAS[t.industria]||{icon:'🏭',label:'Industrial'};
+  return `
+<div style="display:flex;height:100vh;overflow:hidden">
+  <aside style="width:236px;background:var(--bg);border-right:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0">
+    <div style="padding:16px;border-bottom:1px solid var(--border)">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <div style="width:28px;height:28px;background:var(--blue);border-radius:6px;display:flex;align-items:center;justify-content:center;color:#c8dff5;font-size:13px;font-weight:700">B</div>
+        <div><div style="font-size:13px;font-weight:700">BPM Suite</div><div style="font-size:9px;color:var(--gray)">SaaS · Multitenant</div></div>
+      </div>
+      <div style="padding:8px 10px;background:var(--bg2);border-radius:7px;border:1px solid var(--border)">
+        <div style="font-size:10px;color:var(--gray);margin-bottom:2px">${ind.icon} ${ind.label}</div>
+        <div style="font-size:12.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${t.razonSocial}">${t.razonSocial}</div>
+        <div style="font-size:10px;color:var(--gray);margin-top:2px">${t.ciudad||''}</div>
+      </div>
+    </div>
+    <nav style="padding:10px 8px;flex:1;overflow-y:auto">
+      <div style="font-size:9px;font-weight:600;color:#aaa;text-transform:uppercase;letter-spacing:.08em;padding:4px 8px 6px">Módulos</div>
+      ${nav.filter(n=>n.id!=='usuarios'&&n.id!=='configuracion').map(n=>`
+      <button class="nav-item ${S.view===n.id?'active':''}" onclick="setView('${n.id}')">
+        <div style="width:7px;height:7px;border-radius:50%;background:${n.color};flex-shrink:0"></div>${n.l}
+      </button>`).join('')}
+      ${u.rol==='admin'?`
+      <div style="font-size:9px;font-weight:600;color:#aaa;text-transform:uppercase;letter-spacing:.08em;padding:12px 8px 6px">Administración</div>
+      <button class="nav-item ${S.view==='usuarios'?'active':''}" onclick="setView('usuarios')">
+        <div style="width:7px;height:7px;border-radius:50%;background:#534AB7;flex-shrink:0"></div>Usuarios
+      </button>
+      <button class="nav-item ${S.view==='configuracion'?'active':''}" onclick="setView('configuracion')">
+        <div style="width:7px;height:7px;border-radius:50%;background:#534AB7;flex-shrink:0"></div>Configuración
+      </button>`:''}
+      <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:10px">
+        <button class="nav-item" onclick="go({iaOpen:true})" style="color:#993556">
+          <div style="width:7px;height:7px;border-radius:50%;background:#D4537E;flex-shrink:0"></div>✦ Asistente IA
+        </button>
+      </div>
+    </nav>
+    <div style="padding:12px 14px;border-top:1px solid var(--border)">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <div style="width:30px;height:30px;border-radius:50%;background:${rolC.bg};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:${rolC.c};flex-shrink:0">${u.nombre.split(' ').map(w=>w[0]).slice(0,2).join('')}</div>
+        <div style="min-width:0">
+          <div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${u.nombre}</div>
+          <div style="font-size:11px;color:var(--gray)">${u.cargo||rolC.l} · ${u.area||''}</div>
+        </div>
+      </div>
+      <button onclick="doLogout()" style="width:100%;padding:6px;font-size:11.5px;color:var(--gray);border:none;background:transparent">Cerrar sesión</button>
+    </div>
+  </aside>
+  <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+    <header style="padding:12px 20px;background:var(--bg);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:6px;height:6px;border-radius:50%;background:${current?.color||'#185FA5'}"></div>
+        <div>
+          <div style="font-size:14.5px;font-weight:700">${current?.l||''}</div>
+          <div style="font-size:11px;color:var(--gray);margin-top:1px">${new Date().toLocaleDateString('es-PE',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px">
+        ${u.rol!=='operario'?`<button onclick="go({iaOpen:true})" style="border:1px solid #D4537E;background:#FBEAF0;color:#993556;font-weight:500;font-size:12px">✦ Asistente IA</button>`:''}
+        ${u.rol==='admin'?`<button class="btn-p" onclick="exportData()" style="font-size:12px">↓ Exportar</button>`:''}
+      </div>
+    </header>
+    <main style="flex:1;overflow-y:auto;padding:20px">${buildView()}</main>
+  </div>
+</div>
+${S.iaOpen?buildIA():''}
+${S.modal?buildModal():''}`;
+}
+
+function buildView() {
+  switch(S.view) {
+    case 'dashboard':      return buildDashboard();
+    case 'registros':      return buildRegistros();
+    case 'documentos':     return buildSimpleTable('documentos');
+    case 'auditorias':     return buildSimpleTable('auditorias');
+    case 'capacitaciones': return buildSimpleTable('capacitaciones');
+    case 'noconformidades':return buildSimpleTable('noconformidades');
+    case 'usuarios':       return buildUsuarios();
+    case 'configuracion':  return buildConfiguracion();
+    default: return '<p style="color:var(--gray)">Sección no disponible.</p>';
+  }
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+function buildDashboard() {
+  const t = S.tenant;
+  const d = t.data;
+  const ind = INDUSTRIAS[t.industria]||{icon:'🏭',label:'Industrial'};
+  const regVenc = d.registros.filter(r=>r.estado==='vencido').length;
+  const ncOpen = d.noConformidades.filter(n=>n.estado!=='cerrado').length;
+  const capOk = d.capacitaciones.filter(c=>c.estado==='al_dia').length;
+  const capPct = d.capacitaciones.length?Math.round(capOk/d.capacitaciones.length*100):0;
+  const docPct = d.documentos.length?Math.round(d.documentos.filter(d=>d.estado==='al_dia').length/d.documentos.length*100):0;
+  const regPct = d.registros.length?Math.round(d.registros.filter(r=>r.estado==='al_dia').length/d.registros.length*100):0;
+  const ncPct = d.noConformidades.length?Math.round(d.noConformidades.filter(n=>n.accionCorrectiva&&n.accionCorrectiva.length>0).length/d.noConformidades.length*100):100;
+  const gen = Math.round((regPct+docPct+capPct+ncPct)/4);
+  const totalUsers = t.users.filter(u=>u.activo).length;
+  const bar = (l,pct,color,count) => `<div style="margin-bottom:10px">
+    <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:12px;font-weight:500">${l}</span><span style="font-size:11px;color:var(--gray)">${count}</span></div>
+    <div style="height:5px;border-radius:3px;background:var(--bg3)"><div style="height:100%;border-radius:3px;background:${color};width:${pct}%"></div></div>
+  </div>`;
+  return `
+<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:18px">
+  ${[{l:'Cumplimiento BPM',v:`${gen}%`,d:'General del sistema',dc:'var(--green)'},
+     {l:'Registros activos',v:d.registros.length,d:`${regVenc} vencidos`,dc:regVenc>0?'var(--red)':'var(--gray)'},
+     {l:'No conformidades',v:ncOpen,d:'abiertas',dc:ncOpen>0?'var(--amber)':'var(--green)'},
+     {l:'Personal capacitado',v:`${capPct}%`,d:`${d.capacitaciones.length-capOk} pendientes`,dc:capPct<80?'var(--amber)':'var(--gray)'},
+     {l:'Usuarios activos',v:totalUsers,d:`${t.users.length} en total`,dc:'var(--gray)'},
+  ].map(k=>`<div style="background:var(--bg2);border-radius:8px;padding:12px 14px;border:1px solid var(--border)">
+    <div style="font-size:10.5px;color:var(--gray);margin-bottom:4px">${k.l}</div>
+    <div style="font-size:22px;font-weight:700">${k.v}</div>
+    <div style="font-size:11px;color:${k.dc};margin-top:2px">${k.d}</div>
+  </div>`).join('')}
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+  <div class="card">
+    <div style="font-weight:600;margin-bottom:14px">Cumplimiento por módulo</div>
+    ${bar('Registros BPM',regPct,'#185FA5',d.registros.length+' registros')}
+    ${bar('Documentos y SOPs',docPct,'#534AB7',d.documentos.length+' docs')}
+    ${bar('Capacitaciones',capPct,'#639922',d.capacitaciones.length+' personas')}
+    ${bar('No conformidades c/CAPA',ncPct,'#A32D2D',d.noConformidades.length+' NC')}
+  </div>
+  <div class="card">
+    <div style="font-weight:600;margin-bottom:12px">Información de la empresa</div>
+    <div style="margin-bottom:10px;padding:10px 12px;background:var(--bg2);border-radius:8px">
+      <div style="font-size:10px;color:var(--gray);margin-bottom:4px">Industria / Norma</div>
+      <div style="font-size:13px;font-weight:600">${ind.icon} ${ind.label}</div>
+      <div style="font-size:11px;color:var(--gray)">${ind.norma}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px">
+      <div><span style="color:var(--gray)">RUC/NIT:</span> ${t.ruc||'—'}</div>
+      <div><span style="color:var(--gray)">País:</span> ${t.pais||'—'}</div>
+      <div><span style="color:var(--gray)">Ciudad:</span> ${t.ciudad||'—'}</div>
+      <div><span style="color:var(--gray)">Turnos:</span> ${t.nTurnos||1} turno(s)</div>
+    </div>
+    <div style="margin-top:12px">
+      <div style="font-size:11px;color:var(--gray);margin-bottom:6px;font-weight:600">Áreas de la empresa:</div>
+      <div>${(t.areas||[]).map(a=>`<span style="display:inline-block;padding:2px 8px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:11px;margin:2px">${a}</span>`).join('')}</div>
+    </div>
+  </div>
+</div>
+<div class="card">
+  <div style="font-weight:600;margin-bottom:12px">Usuarios del sistema</div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+    ${Object.entries(ROL_CFG).map(([k,v])=>`<div style="padding:10px;background:${v.bg};border-radius:8px;text-align:center">
+      <div style="font-size:18px;font-weight:700;color:${v.c}">${t.users.filter(u=>u.rol===k&&u.activo).length}</div>
+      <div style="font-size:11px;color:${v.c};font-weight:500">${v.l}${t.users.filter(u=>u.rol===k&&u.activo).length!==1?'es':''}</div>
+    </div>`).join('')}
+  </div>
+</div>`;
+}
+
+// ============================================================
+// REGISTROS BPM (con formato de llenado completo)
+// ============================================================
+function buildRegistros() {
+  const t = S.tenant;
+  const registros = t.data.registros;
+  const isEdit = S.user.rol==='admin'||S.user.rol==='supervisor';
+  return `
+<div style="display:flex;gap:8px;margin-bottom:14px;align-items:center;flex-wrap:wrap">
+  <input id="reg-search" placeholder="Buscar registro…" style="max-width:220px" oninput="filterRegistros()">
+  <select id="reg-tipo" style="max-width:180px" onchange="filterRegistros()">
+    <option value="">Todos los tipos</option>
+    ${Object.entries(TIPOS_REGISTRO).map(([k,v])=>`<option value="${k}">${v.icon} ${v.label}</option>`).join('')}
+  </select>
+  <div style="flex:1"></div>
+  ${isEdit?`<button class="btn-p" onclick="openModal({type:'newRegistro'})">+ Nuevo registro</button>`:''}
+</div>
+<div id="reg-list">${renderRegistroCards(registros, isEdit)}</div>`;
+}
+
+function renderRegistroCards(registros, isEdit) {
+  if (!registros.length) return `<div style="text-align:center;color:var(--gray);padding:40px 20px;background:var(--bg);border-radius:10px;border:1px solid var(--border)">
+    <div style="font-size:32px;margin-bottom:8px">📋</div>
+    <div style="font-weight:600;margin-bottom:4px">No hay registros aún</div>
+    <div style="font-size:12px">Los registros fueron preconfigurados según tu industria. Puedes agregar nuevos aquí.</div>
+  </div>`;
+  return registros.map(r => {
+    const tipo = TIPOS_REGISTRO[r.tipo]||{label:'General',icon:'📋',color:'#185FA5'};
+    const filas = (S.formatos[r.id]||[]);
+    const pendApproval = filas.filter(f=>
+      (S.user.rol==='supervisor'&&f.estado==='pendiente')||
+      (S.user.rol==='admin'&&(f.estado==='pendiente'||f.estado==='revision'))
+    ).length;
+    return `<div class="card" style="margin-bottom:10px">
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <div style="width:42px;height:42px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;background:${tipo.color}18">${tipo.icon}</div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px">
+            <span style="font-size:10px;font-family:monospace;color:var(--gray)">${r.codigo}</span>
+            <span style="font-weight:600;font-size:13.5px">${r.nombre}</span>
+            ${pill(ESTADO_CFG[r.estado]||ESTADO_CFG.pendiente)}
+            ${pendApproval>0?`<span class="pill" style="background:var(--amber-l);color:var(--amber)">${pendApproval} pendiente${pendApproval>1?'s':''} aprobación</span>`:''}
+          </div>
+          <div style="display:flex;gap:12px;font-size:12px;color:var(--gray);flex-wrap:wrap;margin-bottom:6px">
+            <span>📍 ${r.area}</span>
+            <span>🔄 ${r.frecuencia}</span>
+            <span>👤 ${r.responsable||'—'}</span>
+            <span style="background:${tipo.color}18;color:${tipo.color};padding:1px 8px;border-radius:6px;font-size:11px;font-weight:500">${tipo.label}</span>
+          </div>
+          <div style="font-size:11px;color:var(--gray)">
+            Filas: <strong>${filas.length}</strong> · Aprobadas: <strong style="color:var(--green)">${filas.filter(f=>f.estado==='aprobado').length}</strong> · Pendientes: <strong style="color:var(--amber)">${filas.filter(f=>f.estado==='pendiente').length}</strong>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end">
+          <button class="btn-sm btn-p" onclick="openFormato('${r.id}')">📋 Ver/Llenar formato</button>
+          ${isEdit?`<button class="btn-sm" onclick="openModal({type:'editRegistro',id:'${r.id}'})">Configurar</button>
+          <button class="btn-sm btn-danger" onclick="deleteRegistro('${r.id}')">Eliminar</button>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+// FORMATO MODAL (campos fijos + tabla de llenado + aprobación)
+// ============================================================
+function buildFormatoModal() {
+  const rid = S.modal.id;
+  const t = S.tenant;
+  const reg = t.data.registros.find(r=>r.id===rid);
+  if (!reg) return '';
+  const tipo = TIPOS_REGISTRO[reg.tipo]||TIPOS_REGISTRO.temperatura;
+  const filas = S.formatos[rid]||[];
+  const cf = reg.camposFijos||{};
+  const u = S.user;
+  const canFill = ['operario','supervisor','admin'].includes(u.rol);
+  const canReview = u.rol==='supervisor'||u.rol==='admin';
+  const canApprove = u.rol==='admin';
+
+  const track = (fila) => {
+    const steps = [
+      {l:'Operario', done:true, who:fila.operario||''},
+      {l:'Supervisor', done:fila.estado==='revision'||fila.estado==='aprobado'||fila.estado==='rechazado', who:fila.revisadoPor||''},
+      {l:'Jefe/Admin', done:fila.estado==='aprobado'||fila.estado==='rechazado', who:fila.aprobadoPor||''},
+    ];
+    return `<div style="display:flex;align-items:center;gap:3px">
+      ${steps.map((s,i)=>`
+        <div style="display:flex;flex-direction:column;align-items:center;gap:1px">
+          <div style="width:20px;height:20px;border-radius:50%;background:${s.done?(fila.estado==='rechazado'&&i===2?'var(--red)':'var(--green)'):'var(--border)'};display:flex;align-items:center;justify-content:center;font-size:9px;color:${s.done?'white':'var(--gray)'}">
+            ${s.done?(fila.estado==='rechazado'&&i===2?'✕':'✓'):'○'}
+          </div>
+          <div style="font-size:8px;color:var(--gray);white-space:nowrap">${s.l}</div>
+          ${s.who?`<div style="font-size:8px;color:var(--blue);white-space:nowrap;max-width:55px;overflow:hidden;text-overflow:ellipsis">${s.who.split(' ')[0]}</div>`:''}
+        </div>
+        ${i<2?`<div style="width:12px;height:2px;background:${s.done?'var(--green)':'var(--border)'};margin-bottom:16px;flex-shrink:0"></div>`:''}
+      `).join('')}
+    </div>`;
+  };
+
+  return `<div class="overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal" style="width:900px">
+    <div style="background:linear-gradient(135deg,${tipo.color},${tipo.color}cc);border-radius:10px 10px 0 0;padding:18px 22px;margin:-28px -28px 20px">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:12px">
+          <span style="font-size:28px">${tipo.icon}</span>
+          <div>
+            <div style="font-size:9px;color:rgba(255,255,255,.7);text-transform:uppercase;letter-spacing:.08em">${reg.codigo} · ${tipo.label}</div>
+            <div style="font-size:17px;font-weight:700;color:white">${reg.nombre}</div>
+            <div style="font-size:11px;color:rgba(255,255,255,.8)">${reg.area} · ${reg.frecuencia}</div>
+          </div>
+        </div>
+        <button onclick="closeModal()" style="background:rgba(255,255,255,.2);border:none;color:white;width:30px;height:30px;border-radius:6px;font-size:18px">×</button>
+      </div>
+    </div>
+
+    <!-- CAMPOS FIJOS -->
+    <div class="section-title">Datos del registro (encabezado del formato)</div>
+    <div class="grid3" style="margin-bottom:20px">
+      ${tipo.camposFijos.map(f=>`<div>
+        <label>${f.l}</label>
+        <div style="padding:7px 10px;background:var(--bg2);border-radius:6px;border:1px solid var(--border);font-size:12.5px;font-weight:500;min-height:34px">${cf[f.k]||'<span style="color:var(--gray);font-style:italic">Sin configurar</span>'}</div>
+      </div>`).join('')}
+    </div>
+
+    <!-- TABLA LLENADO -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div class="section-title" style="margin:0;border:none;padding:0">Registros de llenado diario <span style="font-size:11px;font-weight:400;text-transform:none;color:var(--gray)">(${filas.length} entradas)</span></div>
+      ${canFill?`<button class="btn-sm btn-p" onclick="openModal({type:'newFila',id:'${rid}'})">+ Agregar registro</button>`:''}
+    </div>
+    ${filas.length===0?`<div style="text-align:center;color:var(--gray);padding:24px;background:var(--bg2);border-radius:8px;margin-bottom:16px">
+      No hay registros de llenado. ${canFill?'Haz clic en "+ Agregar registro" para comenzar.':''}
+    </div>`:`
+    <div style="overflow-x:auto;margin-bottom:16px">
+      <table style="min-width:700px">
+        <thead><tr>
+          ${tipo.columnasLlenado.map(c=>`<th style="min-width:${c.k==='accion'?'160px':'90px'}">${c.l}</th>`).join('')}
+          <th style="min-width:140px">Flujo de aprobación</th>
+          <th style="min-width:100px">Estado</th>
+          <th style="min-width:120px">Acciones</th>
+        </tr></thead>
+        <tbody>
+          ${filas.sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||'')).map(fila=>`
+          <tr>
+            ${tipo.columnasLlenado.map(c=>{
+              const v=fila[c.k]||'—';
+              const isOk=v==='Sí'||v==='Conforme'||v==='Aceptado'||v==='Operativo';
+              const isNo=v==='No'||v==='No conforme'||v==='Rechazado'||v==='Fuera de servicio';
+              if(isOk||isNo)return`<td><span style="font-weight:600;color:${isOk?'var(--green)':'var(--red)'}">${v}</span></td>`;
+              return`<td style="font-size:12px;max-width:160px">${v}</td>`;
+            }).join('')}
+            <td>${track(fila)}</td>
+            <td>${pill(FILA_CFG[fila.estado]||FILA_CFG.pendiente)}</td>
+            <td>
+              <div style="display:flex;gap:4px;flex-wrap:wrap">
+                ${fila.estado==='pendiente'&&canReview?`<button class="btn-sm btn-amber" onclick="cambiarFila('${rid}','${fila.id}','revision')">Revisar</button>`:''}
+                ${fila.estado==='revision'&&canApprove?`<button class="btn-sm btn-green" onclick="cambiarFila('${rid}','${fila.id}','aprobado')">Aprobar</button>`:''}
+                ${(fila.estado==='pendiente'||fila.estado==='revision')&&(canReview||canApprove)?`<button class="btn-sm btn-danger" onclick="cambiarFila('${rid}','${fila.id}','rechazado')">Rechazar</button>`:''}
+                <button class="btn-sm btn-danger" onclick="deleteFila('${rid}','${fila.id}')">✕</button>
+              </div>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`}
+    <div style="display:flex;justify-content:flex-end"><button onclick="closeModal()">Cerrar</button></div>
+  </div>
+</div>`;
+}
+
+// ============================================================
+// MODAL: NUEVA FILA DE LLENADO
+// ============================================================
+function buildNewFilaModal() {
+  const rid = S.modal.id;
+  const t = S.tenant;
+  const reg = t.data.registros.find(r=>r.id===rid);
+  if (!reg) return '';
+  const tipo = TIPOS_REGISTRO[reg.tipo]||TIPOS_REGISTRO.temperatura;
+  return `<div class="overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal modal-sm">
+    <div style="font-size:15px;font-weight:700;margin-bottom:4px">${tipo.icon} Nuevo registro de llenado</div>
+    <div style="font-size:12px;color:var(--gray);margin-bottom:18px">${reg.nombre}</div>
+    <div class="grid2" style="gap:10px">
+      ${tipo.columnasLlenado.map(c=>`<div${c.k==='accion'?` style="grid-column:span 2"`:''}><label>${c.l}</label>
+        ${c.type==='select'?`<select id="nf-${c.k}">${c.opts.map(o=>`<option>${o}</option>`).join('')}</select>`:
+          c.type==='date'?`<input type="date" id="nf-${c.k}" value="${today()}">`:
+          c.type==='time'?`<input type="time" id="nf-${c.k}" value="${new Date().toTimeString().slice(0,5)}">`:
+          c.type==='number'?`<input type="number" id="nf-${c.k}" step="0.01" placeholder="0">`:
+          `<input id="nf-${c.k}" value="${c.k==='operario'?S.user.nombre:''}">`}
+      </div>`).join('')}
+    </div>
+    <div style="display:flex;gap:8px;margin-top:18px;justify-content:flex-end">
+      <button onclick="closeFila('${rid}')">Cancelar</button>
+      <button class="btn-p" onclick="saveFila('${rid}')">Guardar registro</button>
+    </div>
+  </div>
+</div>`;
+}
+
+// ============================================================
+// MODAL: REGISTRO CONFIG (nuevo/editar)
+// ============================================================
+function buildRegistroModal(isNew) {
+  const rid = S.modal.id;
+  const t = S.tenant;
+  const reg = isNew ? {} : (t.data.registros.find(r=>r.id===rid)||{});
+  const tipoKey = reg.tipo||'temperatura';
+  const tipo = TIPOS_REGISTRO[tipoKey];
+  const cf = reg.camposFijos||{};
+  return `<div class="overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div style="font-size:16px;font-weight:700;margin-bottom:4px">${isNew?'Nuevo registro BPM':'Configurar registro BPM'}</div>
+    <div style="font-size:12px;color:var(--gray);margin-bottom:20px">Define los metadatos y los campos fijos del encabezado del formato</div>
+    <div class="section-title">Información general</div>
+    <div class="grid2" style="gap:12px;margin-bottom:18px">
+      <div><label>Código *</label><input id="rc-codigo" value="${reg.codigo||''}"></div>
+      <div><label>Área responsable</label><select id="rc-area">
+        ${(t.areas||[]).map(a=>`<option${reg.area===a?' selected':''}>${a}</option>`).join('')}
+      </select></div>
+      <div style="grid-column:span 2"><label>Nombre del registro *</label><input id="rc-nombre" value="${reg.nombre||''}"></div>
+      <div><label>Tipo de registro</label>
+        <select id="rc-tipo" onchange="updateCamposFijos(this.value)">
+          ${Object.entries(TIPOS_REGISTRO).map(([k,v])=>`<option value="${k}"${tipoKey===k?' selected':''}>${v.icon} ${v.label}</option>`).join('')}
+        </select>
+      </div>
+      <div><label>Frecuencia</label><select id="rc-frecuencia">
+        ${FRECUENCIAS.map(f=>`<option${reg.frecuencia===f?' selected':''}>${f}</option>`).join('')}
+      </select></div>
+      <div><label>Responsable</label><input id="rc-responsable" value="${reg.responsable||''}"></div>
+      <div><label>Estado</label><select id="rc-estado">
+        <option value="al_dia"${reg.estado==='al_dia'?' selected':''}>Al día</option>
+        <option value="pendiente"${reg.estado==='pendiente'||!reg.estado?' selected':''}>Pendiente</option>
+        <option value="vencido"${reg.estado==='vencido'?' selected':''}>Vencido</option>
+      </select></div>
+    </div>
+    <div class="section-title">Campos fijos del formato (encabezado del registro)</div>
+    <div id="campos-fijos" class="grid2" style="gap:10px;margin-bottom:18px">
+      ${tipo.camposFijos.map(f=>`<div><label>${f.l}</label><input id="cf-${f.k}" value="${cf[f.k]||''}"></div>`).join('')}
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button onclick="closeModal()">Cancelar</button>
+      <button class="btn-p" onclick="saveRegistro(${isNew},'${rid||''}')">Guardar</button>
+    </div>
+  </div>
+</div>`;
+}
+
+// ============================================================
+// USUARIOS
+// ============================================================
+function buildUsuarios() {
+  const t = S.tenant;
+  const u = S.user;
+  return `
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px">
+  ${Object.entries(ROL_CFG).map(([k,v])=>`<div style="padding:12px;background:${v.bg};border-radius:8px;border:1px solid var(--border)">
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><div style="width:7px;height:7px;border-radius:50%;background:${v.c}"></div><span style="font-size:12px;font-weight:600;color:${v.c}">${v.l}</span></div>
+    <div style="font-size:11px;color:${v.c}">${t.users.filter(u=>u.rol===k&&u.activo).length} activos · ${t.users.filter(u=>u.rol===k&&!u.activo).length} inactivos</div>
+  </div>`).join('')}
+</div>
+<div style="display:flex;gap:8px;margin-bottom:14px">
+  <input placeholder="Buscar usuario…" style="max-width:260px" oninput="filterUsers(this.value)">
+  <div style="flex:1"></div>
+  <button class="btn-p" onclick="openModal({type:'newUser'})">+ Nuevo usuario</button>
+</div>
+<div class="card" style="padding:0;overflow:hidden">
+  <table>
+    <thead><tr><th style="padding-left:14px">Nombre</th><th>Usuario</th><th>Rol</th><th>Área</th><th>Cargo</th><th>Estado</th><th>Acciones</th></tr></thead>
+    <tbody id="users-body">${renderUserRows(t.users)}</tbody>
+  </table>
+</div>`;
+}
+
+function renderUserRows(users) {
+  return users.map(u=>`<tr style="${!u.activo?'opacity:.5':''}">
+    <td style="padding-left:14px;font-weight:500">${u.nombre}${u.id===S.user.id?` <span style="font-size:10px;padding:1px 6px;border-radius:8px;background:var(--blue-l);color:var(--blue)">Tú</span>`:''}</td>
+    <td style="font-family:monospace;font-size:12px">${u.usuario}</td>
+    <td>${pill(ROL_CFG[u.rol])}</td>
+    <td style="color:var(--gray)">${u.area||'—'}</td>
+    <td style="color:var(--gray)">${u.cargo||'—'}</td>
+    <td>${pill(u.activo?{bg:'var(--green-l)',c:'var(--green)'}:{bg:'var(--gray-l)',c:'var(--gray)'},u.activo?'Activo':'Inactivo')}</td>
+    <td>
+      <div style="display:flex;gap:5px">
+        <button class="btn-sm" onclick="openModal({type:'editUser',id:'${u.id}'})">Editar</button>
+        <button class="btn-sm btn-amber" onclick="toggleUser('${u.id}')">${u.activo?'Desactivar':'Activar'}</button>
+        <button class="btn-sm btn-danger" onclick="deleteUser('${u.id}')">Eliminar</button>
+      </div>
+    </td>
+  </tr>`).join('');
+}
+
+function buildUserModal(isNew) {
+  const t = S.tenant;
+  const u = isNew ? {} : (t.users.find(x=>x.id===S.modal.id)||{});
+  return `<div class="overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal modal-sm">
+    <div style="font-size:15px;font-weight:700;margin-bottom:4px">${isNew?'Nuevo usuario':'Editar usuario'}</div>
+    <div style="font-size:12px;color:var(--gray);margin-bottom:18px">${!isNew?'Deja la contraseña en blanco para no cambiarla':''}</div>
+    <div class="grid2" style="gap:12px">
+      <div style="grid-column:span 2"><label>Nombre completo *</label><input id="uf-nombre" value="${u.nombre||''}"></div>
+      <div><label>Usuario (login) *</label><input id="uf-usuario" value="${u.usuario||''}"></div>
+      <div><label>Contraseña${!isNew?' (opcional)':' *'}</label><input id="uf-pw" type="password"></div>
+      <div><label>Rol</label><select id="uf-rol">
+        ${Object.entries(ROL_CFG).map(([k,v])=>`<option value="${k}"${u.rol===k?' selected':''}>${v.l}</option>`).join('')}
+      </select></div>
+      <div><label>Área</label><select id="uf-area">
+        ${(t.areas||[]).map(a=>`<option${u.area===a?' selected':''}>${a}</option>`).join('')}
+      </select></div>
+      <div><label>Cargo / Puesto</label><input id="uf-cargo" value="${u.cargo||''}"></div>
+      <div><label>Correo electrónico</label><input id="uf-email" value="${u.email||''}"></div>
+      <div><label>Teléfono</label><input id="uf-tel" value="${u.telefono||''}"></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:18px;justify-content:flex-end">
+      <button onclick="closeModal()">Cancelar</button>
+      <button class="btn-p" onclick="saveUser('${u.id||''}')">Guardar usuario</button>
+    </div>
+  </div>
+</div>`;
+}
+
+// ============================================================
+// CONFIGURACIÓN
+// ============================================================
+function buildConfiguracion() {
+  const t = S.tenant;
+  const ind = INDUSTRIAS[t.industria]||{icon:'🏭',label:'Industrial'};
+  return `
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+  <div>
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-weight:600;font-size:14px;margin-bottom:14px">Datos de la empresa</div>
+      <div class="grid2" style="gap:10px">
+        <div style="grid-column:span 2"><label>Razón social</label><input id="cfg-razon" value="${t.razonSocial||''}"></div>
+        <div><label>RUC / NIT</label><input id="cfg-ruc" value="${t.ruc||''}"></div>
+        <div><label>País</label><input id="cfg-pais" value="${t.pais||''}"></div>
+        <div><label>Ciudad</label><input id="cfg-ciudad" value="${t.ciudad||''}"></div>
+        <div><label>Teléfono</label><input id="cfg-tel" value="${t.telefono||''}"></div>
+        <div style="grid-column:span 2"><label>Dirección</label><input id="cfg-dir" value="${t.direccion||''}"></div>
+        <div style="grid-column:span 2"><label>Correo de contacto</label><input id="cfg-email" value="${t.email||''}"></div>
+      </div>
+      <button class="btn-p" style="margin-top:14px" onclick="saveConfig()">Guardar cambios</button>
+    </div>
+    <div class="card">
+      <div style="font-weight:600;font-size:14px;margin-bottom:4px">Industria y norma</div>
+      <div style="font-size:12px;color:var(--gray);margin-bottom:12px">El tipo de industria define los formatos BPM precargados</div>
+      <div style="padding:14px;background:${ind.color||'var(--blue)'}18;border-radius:8px;display:flex;gap:12px;align-items:center">
+        <div style="font-size:32px">${ind.icon}</div>
+        <div>
+          <div style="font-size:13px;font-weight:600">${ind.label}</div>
+          <div style="font-size:11px;color:var(--gray)">${ind.norma||''}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div>
+    <div class="card" style="margin-bottom:14px">
+      <div style="font-weight:600;font-size:14px;margin-bottom:14px">Áreas de la empresa</div>
+      ${(t.areas||[]).map((a,i)=>`<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+        <input value="${a}" onchange="updateCfgArea(${i},this.value)" style="flex:1">
+        <button class="btn-sm btn-danger" onclick="removeCfgArea(${i})">✕</button>
+      </div>`).join('')}
+      <button onclick="addCfgArea()" style="font-size:12px;color:var(--blue);border-color:var(--blue-l);background:var(--blue-l);margin-top:4px">+ Agregar área</button>
+    </div>
+    <div class="card">
+      <div style="font-weight:600;font-size:14px;margin-bottom:14px">Turnos de trabajo</div>
+      <div class="grid2" style="gap:10px">
+        <div><label>N° de turnos</label><select id="cfg-nTurnos">
+          ${[1,2,3].map(n=>`<option value="${n}"${(t.nTurnos||1)==n?' selected':''}>${ n} turno${n>1?'s':''}</option>`).join('')}
+        </select></div>
+        <div><label>Horario turno 1</label><input id="cfg-t1" value="${t.turno1||'06:00 - 14:00'}"></div>
+        <div><label>Horario turno 2</label><input id="cfg-t2" value="${t.turno2||'14:00 - 22:00'}"></div>
+        <div><label>Horario turno 3</label><input id="cfg-t3" value="${t.turno3||'22:00 - 06:00'}"></div>
+      </div>
+      <button class="btn-p" style="margin-top:14px" onclick="saveTurnos()">Guardar turnos</button>
+    </div>
+  </div>
+</div>`;
+}
+
+// ============================================================
+// SIMPLE TABLES (documentos, auditorias, cap, NC)
+// ============================================================
+const TBL = {
+  documentos:{
+    cols:['Código','Título','Tipo','Versión','Vigencia','Aprobado por','Estado'],
+    row:d=>[`<span style="font-family:monospace;font-size:11px;color:var(--gray)">${d.codigo}</span>`,d.titulo,`<span class="pill" style="background:var(--bg2);color:var(--gray)">${d.tipo}</span>`,d.version,d.vigencia,d.aprobadoPor,pill(ESTADO_CFG[d.estado]||ESTADO_CFG.pendiente)],
+    empty:{codigo:'',titulo:'',tipo:'SOP',version:'v1.0',vigencia:'',aprobadoPor:'',estado:'al_dia'},
+    fields:[{k:'codigo',l:'Código'},{k:'titulo',l:'Título',span:2},{k:'version',l:'Versión'},{k:'vigencia',l:'Vigencia (YYYY-MM)'},{k:'aprobadoPor',l:'Aprobado por'},{k:'tipo',l:'Tipo',type:'select',opts:['SOP','Manual','Instructivo','Política','Formato']},{k:'estado',l:'Estado',type:'select',opts:['al_dia:Vigente','proximo:Por renovar','vencido:Vencido']}],title:'documento',
+  },
+  auditorias:{
+    cols:['ID','Tipo','Área','Fecha','Auditor','Hallazgos','Estado'],
+    row:(a,i)=>[`<span style="font-family:monospace;font-size:11px;color:var(--gray)">AUD-${String(i+1).padStart(3,'0')}</span>`,`<span class="pill" style="background:var(--bg2);color:var(--gray)">${a.tipo}</span>`,a.area,a.fecha||'—',a.auditor,a.hallazgos||'—',pill(ESTADO_CFG[a.estado]||ESTADO_CFG.pendiente)],
+    empty:{tipo:'Interna',area:'',fecha:'',auditor:'',hallazgos:'',estado:'proximo'},
+    fields:[{k:'tipo',l:'Tipo',type:'select',opts:['Interna','Externa','Inspección']},{k:'estado',l:'Estado',type:'select',opts:['proximo:Próxima','en_proceso:En seguimiento','cerrado:Cerrada']},{k:'area',l:'Área auditada',span:2},{k:'fecha',l:'Fecha (YYYY-MM-DD)'},{k:'auditor',l:'Auditor / Entidad'},{k:'hallazgos',l:'Hallazgos',span:2}],title:'auditoría',
+  },
+  capacitaciones:{
+    cols:['Empleado','Cargo','Tema','Fecha','Evaluación','Vigencia','Estado'],
+    row:c=>[`<span style="font-weight:500">${c.empleado}</span>`,c.cargo,c.tema,c.fecha||'—',c.evaluacion||'—',c.vigencia||'—',pill(ESTADO_CFG[c.estado]||ESTADO_CFG.pendiente)],
+    empty:{empleado:'',cargo:'',tema:'',fecha:'',evaluacion:'',vigencia:'',estado:'pendiente'},
+    fields:[{k:'empleado',l:'Empleado'},{k:'cargo',l:'Cargo'},{k:'tema',l:'Tema de capacitación',span:2},{k:'fecha',l:'Fecha'},{k:'evaluacion',l:'Evaluación'},{k:'vigencia',l:'Vigencia'},{k:'estado',l:'Estado',type:'select',opts:['al_dia:Al día','pendiente:Pendiente','vencido:Vencido']}],title:'capacitación',
+  },
+  noconformidades:{
+    cols:['ID','Descripción','Severidad','Acción correctiva','Responsable','Estado'],
+    row:(n,i,arr)=>[`<span style="font-family:monospace;font-size:11px;color:var(--gray)">NC-${String(arr.length-i).padStart(3,'0')}</span>`,`<span style="font-size:12px">${n.descripcion}</span>`,pill({mayor:{bg:'var(--red-l)',c:'var(--red)'},menor:{bg:'var(--amber-l)',c:'var(--amber)'},observacion:{bg:'var(--gray-l)',c:'var(--gray)'}}[n.severidad]||{bg:'var(--gray-l)',c:'var(--gray)'}),`<span style="font-size:12px;color:${n.accionCorrectiva?'inherit':'var(--red)'}">${n.accionCorrectiva||'— Sin CAPA'}</span>`,n.responsable||'Sin asignar',pill(ESTADO_CFG[n.estado]||ESTADO_CFG.pendiente)],
+    empty:{descripcion:'',origen:'',severidad:'menor',accionCorrectiva:'',responsable:'',estado:'pendiente',fechaApertura:today()},
+    fields:[{k:'descripcion',l:'Descripción',type:'textarea',span:2},{k:'origen',l:'Origen',span:2},{k:'severidad',l:'Severidad',type:'select',opts:['mayor:Mayor','menor:Menor','observacion:Observación']},{k:'estado',l:'Estado',type:'select',opts:['pendiente:Pendiente','en_proceso:En proceso','cerrado:Cerrado']},{k:'accionCorrectiva',l:'Acción correctiva (CAPA)',type:'textarea',span:2},{k:'responsable',l:'Responsable'},{k:'fechaApertura',l:'Fecha apertura'}],title:'no conformidad',
+  },
+};
+
+function buildSimpleTable(key) {
+  const cfg = TBL[key];
+  const dataKey = key==='noconformidades'?'noConformidades':key;
+  const items = S.tenant.data[dataKey]||[];
+  const isEdit = S.user.rol==='admin'||S.user.rol==='supervisor';
+  return `<div style="display:flex;gap:8px;margin-bottom:14px">
+    <input id="tbl-search" placeholder="Buscar…" style="max-width:260px" oninput="filterTbl('${key}')">
+    <div style="flex:1"></div>
+    ${isEdit?`<button class="btn-p" onclick="openModal({type:'simpleNew',key:'${key}'})">+ Nuevo ${cfg.title}</button>`:''}
+  </div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <table><thead><tr>${cfg.cols.map(c=>`<th>${c}</th>`).join('')}<th></th></tr></thead>
+    <tbody id="tbl-body">${renderTblRows(key,items,isEdit)}</tbody></table>
+  </div>`;
+}
+
+function renderTblRows(key,items,isEdit) {
+  const cfg=TBL[key];
+  if(!items.length)return`<tr><td colspan="20" style="padding:24px;text-align:center;color:var(--gray)">No hay registros</td></tr>`;
+  return items.map((it,i)=>`<tr>
+    ${cfg.row(it,i,items).map(c=>`<td>${c}</td>`).join('')}
+    <td>${isEdit?`<div style="display:flex;gap:5px">
+      <button class="btn-sm" onclick="openModal({type:'simpleEdit',key:'${key}',id:'${it.id}'})">Editar</button>
+      <button class="btn-sm btn-danger" onclick="deleteTblItem('${key}','${it.id}')">Eliminar</button>
+    </div>`:''}</td>
+  </tr>`).join('');
+}
+
+function buildSimpleModal(isNew) {
+  const m=S.modal;
+  const cfg=TBL[m.key];
+  const dataKey=m.key==='noconformidades'?'noConformidades':m.key;
+  const item=isNew?{...cfg.empty}:(S.tenant.data[dataKey].find(x=>x.id===m.id)||{});
+  return `<div class="overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal modal-sm">
+    <div style="font-size:15px;font-weight:700;margin-bottom:16px">${isNew?`Nuevo ${cfg.title}`:`Editar ${cfg.title}`}</div>
+    <div class="grid2" style="gap:12px">
+      ${cfg.fields.map(f=>`<div${f.span?` style="grid-column:span ${f.span}"`:''}>
+        <label>${f.l}</label>
+        ${f.type==='select'?`<select id="sf-${f.k}">${f.opts.map(o=>{const[v,l]=(o+'').split(':');return`<option value="${v}"${item[f.k]===v?' selected':''}>${l||v}</option>`;}).join('')}</select>`:
+          f.type==='textarea'?`<textarea id="sf-${f.k}" rows="2" style="resize:vertical">${item[f.k]||''}</textarea>`:
+          `<input id="sf-${f.k}" value="${(item[f.k]||'').replace(/"/g,'&quot;')}">`}
+      </div>`).join('')}
+    </div>
+    <div style="display:flex;gap:8px;margin-top:18px;justify-content:flex-end">
+      <button onclick="closeModal()">Cancelar</button>
+      <button class="btn-p" onclick="saveTblItem('${m.key}','${m.id||''}')">Guardar</button>
+    </div>
+  </div>
+</div>`;
+}
+
+// ============================================================
+// IA PANEL
+// ============================================================
+let iaLoading = false;
+function buildIA() {
+  return `<div class="overlay" onclick="if(event.target===this)go({iaOpen:false})" style="align-items:flex-end;justify-content:flex-end;padding:20px">
+  <div style="background:var(--bg);border-radius:14px;width:560px;max-width:96vw;height:560px;display:flex;flex-direction:column;border:1px solid var(--border);overflow:hidden">
+    <div style="padding:13px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg2)">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="width:24px;height:24px;border-radius:6px;background:#FBEAF0;display:flex;align-items:center;justify-content:center;color:#993556">✦</div>
+        <div><div style="font-size:13px;font-weight:600">Asistente IA — BPM Suite</div><div style="font-size:10px;color:var(--gray)">Contexto de ${S.tenant?.razonSocial||'tu empresa'} en tiempo real</div></div>
+      </div>
+      <button onclick="go({iaOpen:false})" style="border:none;background:transparent;font-size:18px;color:var(--gray)">×</button>
+    </div>
+    <div id="ia-msgs" style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px">
+      ${S.iaMessages.map(m=>`<div style="display:flex;justify-content:${m.role==='user'?'flex-end':'flex-start'}">
+        <div style="max-width:85%;padding:10px 14px;border-radius:${m.role==='user'?'12px 12px 3px 12px':'12px 12px 12px 3px'};background:${m.role==='user'?'#185FA5':'var(--bg2)'};color:${m.role==='user'?'#c8dff5':'inherit'};font-size:13px;line-height:1.6;white-space:pre-wrap">${m.content}</div>
+      </div>`).join('')}
+      <div id="ia-bottom"></div>
+    </div>
+    ${S.iaMessages.length<=1?`<div style="padding:0 16px 10px;display:flex;flex-wrap:wrap;gap:5px">
+      ${['Genera un SOP para mi industria','Analiza el cumplimiento actual','Lista NC abiertas y sugiere CAPA','¿Qué normativa aplica para mi empresa?'].map(s=>`<button onclick="iaSend('${s}',true)" style="padding:5px 10px;border-radius:20px;font-size:11.5px;color:var(--gray)">${s}</button>`).join('')}
+    </div>`:''}
+    <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px">
+      <input id="ia-input" placeholder="Escribe tu consulta…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();iaSend()}">
+      <button class="btn-p" onclick="iaSend()">Enviar</button>
+    </div>
+  </div>
+</div>`;
+}
+
+// ============================================================
+// MODAL ROUTER
+// ============================================================
+function buildModal() {
+  const m = S.modal;
+  if (!m) return '';
+  if (m.type==='formato')     return buildFormatoModal();
+  if (m.type==='newFila')     return buildNewFilaModal();
+  if (m.type==='newRegistro') return buildRegistroModal(true);
+  if (m.type==='editRegistro')return buildRegistroModal(false);
+  if (m.type==='newUser')     return buildUserModal(true);
+  if (m.type==='editUser')    return buildUserModal(false);
+  if (m.type==='simpleNew')   return buildSimpleModal(true);
+  if (m.type==='simpleEdit')  return buildSimpleModal(false);
+  return '';
+}
+
+// ============================================================
+// EVENTS
+// ============================================================
+function attachEvents() {
+  const b = document.getElementById('ia-bottom');
+  if (b) b.scrollIntoView({behavior:'instant'});
+}
+function setView(v) { go({view:v, modal:null}); }
+function openModal(m) { go({modal:m}); }
+function closeModal() { go({modal:null}); }
+function closeFila(rid) { go({modal:{type:'formato',id:rid}}); }
+
+// LANDING ACTIONS
+function goLogin() { go({screen:'app', loginScreen:true}); }
+function goRegister() { go({screen:'register', wizard:{step:1,empresa:{},industria:null,areas:[],adminUser:{}}}); }
+
+// WIZARD
+function selectIndustria(k) { S.wizard.industria=k; go({wizard:{...S.wizard}}); }
+function addArea() { S.wizard.areas.push('Nueva área'); go({wizard:{...S.wizard}}); }
+function removeArea(i) { S.wizard.areas.splice(i,1); go({wizard:{...S.wizard}}); }
+function updateArea(i,v) { S.wizard.areas[i]=v; }
+
+function wizardNext(step) {
+  const w = S.wizard;
+  if (step===1) {
+    const r=document.getElementById('w-razon')?.value.trim();
+    if (!r) { alert('La razón social es obligatoria'); return; }
+    S.wizard.empresa = {
+      razonSocial: r,
+      ruc: document.getElementById('w-ruc')?.value.trim(),
+      pais: document.getElementById('w-pais')?.value,
+      ciudad: document.getElementById('w-ciudad')?.value.trim(),
+      direccion: document.getElementById('w-direccion')?.value.trim(),
+      telefono: document.getElementById('w-telefono')?.value.trim(),
+      email: document.getElementById('w-email')?.value.trim(),
+      marca: document.getElementById('w-marca')?.value.trim(),
+      empleados: document.getElementById('w-empleados')?.value,
+    };
+    go({wizard:{...S.wizard, step:2}});
+  }
+  else if (step===2) {
+    if (!w.industria) { alert('Selecciona un tipo de industria'); return; }
+    go({wizard:{...S.wizard, step:3}});
+  }
+  else if (step===3) {
+    const ind = INDUSTRIAS[w.industria];
+    const areas = w.areas.length ? w.areas : [...ind.areas];
+    // Read frecuencias and areas
+    const registros = ind.registros.map((r,i)=>({
+      ...r,
+      frecuencia: document.getElementById('freq-'+i)?.value||r.frecuencia,
+      area: document.getElementById('area-'+i)?.value||r.area,
+    }));
+    S.wizard.areas = areas;
+    S.wizard.registrosConfig = registros;
+    S.wizard.empresa = {...S.wizard.empresa,
+      nTurnos: document.getElementById('w-nTurnos')?.value||'2',
+      turno1: document.getElementById('w-t1')?.value,
+      turno2: document.getElementById('w-t2')?.value,
+    };
+    go({wizard:{...S.wizard, step:4}});
+  }
+  else if (step===4) {
+    const nombre=document.getElementById('w-anombre')?.value.trim();
+    const usuario=document.getElementById('w-ausuario')?.value.trim();
+    const pw=document.getElementById('w-apw')?.value;
+    const pw2=document.getElementById('w-apw2')?.value;
+    if(!nombre||!usuario||!pw){alert('Nombre, usuario y contraseña son obligatorios');return;}
+    if(pw!==pw2){alert('Las contraseñas no coinciden');return;}
+    if(pw.length<6){alert('La contraseña debe tener al menos 6 caracteres');return;}
+    S.wizard.adminUser={
+      nombre, usuario, pw,
+      cargo: document.getElementById('w-acargo')?.value.trim(),
+      email: document.getElementById('w-aemail')?.value.trim(),
+      area: document.getElementById('w-aarea')?.value,
+      telefono: document.getElementById('w-atel')?.value.trim(),
+    };
+    go({wizard:{...S.wizard, step:5}});
+  }
+}
+
+function createTenant() {
+  const w = S.wizard;
+  const ind = INDUSTRIAS[w.industria];
+  const tenantId = uid();
+  const adminId = uid();
+  // Build registros preconfigurados
+  const registros = (w.registrosConfig||ind.registros).map((r,i)=>({
+    id: uid(),
+    codigo: `REG-${String(i+1).padStart(3,'0')}`,
+    nombre: r.nombre,
+    area: r.area,
+    frecuencia: r.frecuencia,
+    responsable: w.adminUser.nombre,
+    tipo: r.tipo,
+    estado: 'pendiente',
+    ultimoRegistro: '',
+    camposFijos: {},
+  }));
+  // Build documentos preconfigurados
+  const documentos = ind.docs.map((d,i)=>({
+    id: uid(),
+    codigo: `SOP-${String(i+1).padStart(3,'0')}`,
+    titulo: d,
+    tipo: d.toLowerCase().includes('manual')?'Manual':d.toLowerCase().includes('política')||d.toLowerCase().includes('politica')?'Política':'SOP',
+    version: 'v1.0',
+    vigencia: `${new Date().getFullYear()+1}-12`,
+    aprobadoPor: w.adminUser.nombre,
+    estado: 'al_dia',
+  }));
+  const tenant = {
+    id: tenantId,
+    razonSocial: w.empresa.razonSocial,
+    ruc: w.empresa.ruc,
+    pais: w.empresa.pais,
+    ciudad: w.empresa.ciudad,
+    direccion: w.empresa.direccion,
+    telefono: w.empresa.telefono,
+    email: w.empresa.email,
+    industria: w.industria,
+    areas: w.areas,
+    nTurnos: w.empresa.nTurnos,
+    turno1: w.empresa.turno1,
+    turno2: w.empresa.turno2,
+    createdAt: new Date().toISOString(),
+    users: [{
+      id: adminId,
+      nombre: w.adminUser.nombre,
+      usuario: w.adminUser.usuario,
+      pw: w.adminUser.pw,
+      rol: 'admin',
+      area: w.adminUser.area,
+      cargo: w.adminUser.cargo,
+      email: w.adminUser.email,
+      telefono: w.adminUser.telefono,
+      activo: true,
+    }],
+    data: {
+      registros,
+      documentos,
+      auditorias: [],
+      capacitaciones: [],
+      noConformidades: [],
+    },
+  };
+  const tenants = store.getTenants();
+  tenants[tenantId] = tenant;
+  store.saveTenants(tenants);
+  const session = {tenantId, userId: adminId};
+  store.saveSession(session);
+  S.session = session;
+  S.tenant = tenant;
+  S.user = tenant.users[0];
+  S.formatos = {};
+  S.screen = 'app';
+  S.view = 'dashboard';
+  S.loginScreen = false;
+  go({});
+}
+
+// LOGIN
+function updateUserList() {
+  const tenantId = document.getElementById('login-tenant')?.value;
+  const tenants = store.getTenants();
+  const tenant = tenants[tenantId];
+  const sel = document.getElementById('login-user');
+  if (sel && tenant) {
+    sel.innerHTML = tenant.users.filter(u=>u.activo).map(u=>`<option value="${u.id}">${u.nombre} (${ROL_CFG[u.rol]?.l||u.rol})</option>`).join('');
+  }
+}
+function doLogin() {
+  const tenantId = document.getElementById('login-tenant')?.value;
+  const userId = document.getElementById('login-user')?.value;
+  const pw = document.getElementById('login-pw')?.value;
+  const tenants = store.getTenants();
+  const tenant = tenants[tenantId];
+  const user = tenant?.users.find(u=>u.id===userId&&u.activo);
+  const err = document.getElementById('login-err');
+  if (!user||user.pw!==pw) {
+    if(err){err.style.display='block';err.textContent='Contraseña incorrecta';}
+    return;
+  }
+  store.saveSession({tenantId,userId});
+  S.tenant=tenant; S.user=user; S.session={tenantId,userId};
+  S.formatos=store.getFormatos(tenantId);
+  S.loginScreen=false; S.screen='app';
+  S.view=user.rol==='operario'?'registros':'dashboard';
+  go({});
+}
+function doLogout() {
+  store.saveSession(null);
+  S.session=null; S.tenant=null; S.user=null;
+  S.screen='landing'; S.loginScreen=false;
+  S.iaMessages=[{role:'assistant',content:'¡Hola! Soy tu asistente BPM con IA. ¿En qué te ayudo?'}];
+  go({});
+}
+
+// APP ACTIONS
+function saveTenant() {
+  const tenants=store.getTenants();
+  tenants[S.session.tenantId]=S.tenant;
+  store.saveTenants(tenants);
+}
+function filterRegistros() {
+  const q=document.getElementById('reg-search')?.value.toLowerCase()||'';
+  const tipo=document.getElementById('reg-tipo')?.value||'';
+  const items=S.tenant.data.registros.filter(r=>(!q||(r.nombre+r.area+r.codigo).toLowerCase().includes(q))&&(!tipo||r.tipo===tipo));
+  const isEdit=S.user.rol==='admin'||S.user.rol==='supervisor';
+  const el=document.getElementById('reg-list');
+  if(el)el.innerHTML=renderRegistroCards(items,isEdit);
+}
+function openFormato(rid) { go({modal:{type:'formato',id:rid}}); }
+function saveRegistro(isNew,rid) {
+  const codigo=document.getElementById('rc-codigo')?.value.trim();
+  const nombre=document.getElementById('rc-nombre')?.value.trim();
+  if(!codigo||!nombre){alert('Código y nombre son obligatorios');return;}
+  const tipoKey=document.getElementById('rc-tipo')?.value||'temperatura';
+  const tipo=TIPOS_REGISTRO[tipoKey];
+  const camposFijos={};
+  tipo.camposFijos.forEach(f=>{const el=document.getElementById('cf-'+f.k);if(el)camposFijos[f.k]=el.value;});
+  const reg={
+    id:isNew?uid():rid, codigo, nombre,
+    area:document.getElementById('rc-area')?.value||'',
+    frecuencia:document.getElementById('rc-frecuencia')?.value||'Diario',
+    responsable:document.getElementById('rc-responsable')?.value||'',
+    estado:document.getElementById('rc-estado')?.value||'pendiente',
+    tipo:tipoKey, camposFijos, ultimoRegistro:today(),
+  };
+  if(isNew) S.tenant.data.registros.push(reg);
+  else S.tenant.data.registros=S.tenant.data.registros.map(r=>r.id===rid?{...r,...reg}:r);
+  saveTenant(); go({modal:null,view:'registros'});
+}
+function deleteRegistro(rid) {
+  if(!confirm('¿Eliminar este registro y sus datos?'))return;
+  S.tenant.data.registros=S.tenant.data.registros.filter(r=>r.id!==rid);
+  const f={...S.formatos}; delete f[rid]; S.formatos=f;
+  saveTenant(); store.saveFormatos(S.session.tenantId,f); go({});
+}
+function updateCamposFijos(tipoKey) {
+  const tipo=TIPOS_REGISTRO[tipoKey]||TIPOS_REGISTRO.temperatura;
+  const el=document.getElementById('campos-fijos');
+  if(el) el.innerHTML=tipo.camposFijos.map(f=>`<div><label>${f.l}</label><input id="cf-${f.k}"></div>`).join('');
+}
+function saveFila(rid) {
+  const reg=S.tenant.data.registros.find(r=>r.id===rid);
+  if(!reg)return;
+  const tipo=TIPOS_REGISTRO[reg.tipo]||TIPOS_REGISTRO.temperatura;
+  const fila={id:uid(),estado:'pendiente',revisadoPor:'',aprobadoPor:''};
+  tipo.columnasLlenado.forEach(c=>{const el=document.getElementById('nf-'+c.k);fila[c.k]=el?el.value:'';});
+  const f={...S.formatos,[rid]:[...(S.formatos[rid]||[]),fila]};
+  S.formatos=f; store.saveFormatos(S.session.tenantId,f);
+  // Update ultimoRegistro
+  S.tenant.data.registros=S.tenant.data.registros.map(r=>r.id===rid?{...r,ultimoRegistro:fila.fecha||today(),estado:'al_dia'}:r);
+  saveTenant(); go({modal:{type:'formato',id:rid}});
+}
+function deleteFila(rid,fid) {
+  if(!confirm('¿Eliminar esta fila?'))return;
+  const f={...S.formatos,[rid]:(S.formatos[rid]||[]).filter(f=>f.id!==fid)};
+  S.formatos=f; store.saveFormatos(S.session.tenantId,f);
+  go({modal:{type:'formato',id:rid}});
+}
+function cambiarFila(rid,fid,nuevoEstado) {
+  const quien=S.user.nombre;
+  const f={...S.formatos,[rid]:(S.formatos[rid]||[]).map(f=>{
+    if(f.id!==fid)return f;
+    const u={...f,estado:nuevoEstado};
+    if(nuevoEstado==='revision')u.revisadoPor=quien;
+    if(nuevoEstado==='aprobado'||nuevoEstado==='rechazado')u.aprobadoPor=quien;
+    return u;
+  })};
+  S.formatos=f; store.saveFormatos(S.session.tenantId,f);
+  go({modal:{type:'formato',id:rid}});
+}
+function filterUsers(q) {
+  const users=S.tenant.users.filter(u=>!q||u.nombre.toLowerCase().includes(q)||u.usuario.toLowerCase().includes(q));
+  const el=document.getElementById('users-body');
+  if(el)el.innerHTML=renderUserRows(users);
+}
+function saveUser(userId) {
+  const nombre=document.getElementById('uf-nombre')?.value.trim();
+  const usuario=document.getElementById('uf-usuario')?.value.trim();
+  const pw=document.getElementById('uf-pw')?.value;
+  const rol=document.getElementById('uf-rol')?.value;
+  const area=document.getElementById('uf-area')?.value;
+  const cargo=document.getElementById('uf-cargo')?.value.trim();
+  const email=document.getElementById('uf-email')?.value.trim();
+  const telefono=document.getElementById('uf-tel')?.value.trim();
+  if(!nombre||!usuario){alert('Nombre y usuario son obligatorios');return;}
+  if(!userId&&!pw){alert('La contraseña es obligatoria para nuevos usuarios');return;}
+  if(!userId&&S.tenant.users.find(u=>u.usuario===usuario)){alert('Ese nombre de usuario ya existe');return;}
+  if(!userId) S.tenant.users.push({id:uid(),nombre,usuario,pw,rol,area,cargo,email,telefono,activo:true});
+  else S.tenant.users=S.tenant.users.map(u=>u.id===userId?{...u,nombre,usuario,rol,area,cargo,email,telefono,...(pw?{pw}:{})}:u);
+  saveTenant(); go({modal:null});
+}
+function toggleUser(uid2) {
+  if(uid2===S.user.id){alert('No puedes desactivar tu propia cuenta');return;}
+  S.tenant.users=S.tenant.users.map(u=>u.id===uid2?{...u,activo:!u.activo}:u);
+  saveTenant(); go({});
+}
+function deleteUser(uid2) {
+  if(uid2===S.user.id){alert('No puedes eliminar tu propia cuenta');return;}
+  if(!confirm('¿Eliminar usuario?'))return;
+  S.tenant.users=S.tenant.users.filter(u=>u.id!==uid2);
+  saveTenant(); go({});
+}
+function filterTbl(key) {
+  const q=document.getElementById('tbl-search')?.value.toLowerCase()||'';
+  const dataKey=key==='noconformidades'?'noConformidades':key;
+  const items=(S.tenant.data[dataKey]||[]).filter(it=>!q||Object.values(it).join(' ').toLowerCase().includes(q));
+  const isEdit=S.user.rol==='admin'||S.user.rol==='supervisor';
+  const el=document.getElementById('tbl-body');
+  if(el)el.innerHTML=renderTblRows(key,items,isEdit);
+}
+function saveTblItem(key,itemId) {
+  const cfg=TBL[key];
+  const dataKey=key==='noconformidades'?'noConformidades':key;
+  const item={};
+  cfg.fields.forEach(f=>{const el=document.getElementById('sf-'+f.k);item[f.k]=el?el.value:'';});
+  if(!itemId){item.id=uid();S.tenant.data[dataKey]=[...S.tenant.data[dataKey],item];}
+  else S.tenant.data[dataKey]=S.tenant.data[dataKey].map(x=>x.id===itemId?{...x,...item}:x);
+  saveTenant(); go({modal:null});
+}
+function deleteTblItem(key,itemId) {
+  if(!confirm('¿Eliminar?'))return;
+  const dataKey=key==='noconformidades'?'noConformidades':key;
+  S.tenant.data[dataKey]=S.tenant.data[dataKey].filter(x=>x.id!==itemId);
+  saveTenant(); go({});
+}
+function saveConfig() {
+  S.tenant.razonSocial=document.getElementById('cfg-razon')?.value.trim()||S.tenant.razonSocial;
+  S.tenant.ruc=document.getElementById('cfg-ruc')?.value.trim();
+  S.tenant.pais=document.getElementById('cfg-pais')?.value.trim();
+  S.tenant.ciudad=document.getElementById('cfg-ciudad')?.value.trim();
+  S.tenant.telefono=document.getElementById('cfg-tel')?.value.trim();
+  S.tenant.direccion=document.getElementById('cfg-dir')?.value.trim();
+  S.tenant.email=document.getElementById('cfg-email')?.value.trim();
+  saveTenant(); alert('Configuración guardada correctamente');
+}
+function saveTurnos() {
+  S.tenant.nTurnos=document.getElementById('cfg-nTurnos')?.value;
+  S.tenant.turno1=document.getElementById('cfg-t1')?.value;
+  S.tenant.turno2=document.getElementById('cfg-t2')?.value;
+  S.tenant.turno3=document.getElementById('cfg-t3')?.value;
+  saveTenant(); alert('Turnos guardados');
+}
+function updateCfgArea(i,v){S.tenant.areas[i]=v;}
+function addCfgArea(){S.tenant.areas.push('Nueva área');saveTenant();go({});}
+function removeCfgArea(i){S.tenant.areas.splice(i,1);saveTenant();go({});}
+function exportData() {
+  const blob=new Blob([JSON.stringify({tenant:S.tenant,formatos:S.formatos},null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`bpm-${S.tenant.razonSocial.replace(/\s+/g,'-')}-${today()}.json`;a.click();
+}
+
+// IA
+async function iaSend(text,fromSugg) {
+  const inp=document.getElementById('ia-input');
+  const q=(text||inp?.value||'').trim();
+  if(!q||iaLoading)return;
+  if(inp&&!fromSugg)inp.value='';
+  S.iaMessages.push({role:'user',content:q});
+  iaLoading=true; go({iaOpen:true});
+  const t=S.tenant;
+  const ind=INDUSTRIAS[t?.industria]||{label:'Industrial',norma:''};
+  const system=`Eres experto consultor en BPM para la industria ${ind.label} (${ind.norma}). Asistes a "${t?.razonSocial||'la empresa'}". Responde siempre en español. Sé práctico y específico.
+Estado: ${t?.data.registros.length} registros (${t?.data.registros.filter(r=>r.estado==='vencido').length} vencidos), ${t?.data.noConformidades.filter(n=>n.estado!=='cerrado').length} NC abiertas, ${t?.data.capacitaciones.filter(c=>c.estado==='al_dia').length}/${t?.data.capacitaciones.length} capacitaciones al día.`;
+  try {
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system,messages:S.iaMessages.map(m=>({role:m.role,content:m.content}))})});
+    const json=await res.json();
+    S.iaMessages.push({role:'assistant',content:json.content?.[0]?.text||'Sin respuesta.'});
+  } catch(e) {
+    S.iaMessages.push({role:'assistant',content:'Error de conexión. El asistente IA funciona dentro de claude.ai.'});
+  }
+  iaLoading=false; go({iaOpen:true});
+}
+
+render();
+</script>
+</body>
+</html>
